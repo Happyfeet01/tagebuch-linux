@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tagebuch
+Comment=Privates Tagebuch: Einträge als Markdown in der eigenen Nextcloud
+Exec=tagebuch-gui
+Icon=io.github.happyfeet01.tagebuchlinux
+Type=Application
+Categories=Utility;Office;
+Keywords=journal;diary;tagebuch;nextcloud;webdav;markdown;
+StartupNotify=true
