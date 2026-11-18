@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- UI-Fix: Klick auf einen Tab (Timeline/Kalender/An diesem Tag/Suche/Statistik/Einstellungen) schliesst jetzt den offenen Editor
+- UI-Fix: App-Container hat eigenen Milchglas-Hintergrund ( halbtransparentes `var(--color-main-background)` + `backdrop-filter: blur`), damit Text ueber einem Hintergrundbild lesbar bleibt; Fallback ohne color-mix/backdrop-filter ist ein deckender Hintergrund
+
 ## 0.2.0
 
 - Anhänge werden bei aktiver clientseitiger Verschlüsselung ebenfalls verschlüsselt (`<name>.enc`, AES-GCM) hochgeladen und in der App entschlüsselt angezeigt (Bild-/Video-Vorschau, Download)
