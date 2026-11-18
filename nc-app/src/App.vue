@@ -34,6 +34,11 @@ const openDate = (date: string) => {
 	editorDate.value = date
 }
 
+const showView = (v: View) => {
+	view.value = v
+	editorDate.value = null
+}
+
 onMounted(async () => {
 	await reload()
 	const token = document.getElementById('tagebuch')?.dataset.token ?? ''
@@ -51,12 +56,12 @@ onMounted(async () => {
 <template>
 	<div class="tagebuch-app">
 		<nav class="tabs">
-			<button type="button" :class="{ active: view === 'timeline' }" @click="view = 'timeline'">Timeline</button>
-			<button type="button" :class="{ active: view === 'calendar' }" @click="view = 'calendar'">Kalender</button>
-			<button type="button" :class="{ active: view === 'onthisday' }" @click="view = 'onthisday'">An diesem Tag</button>
-			<button type="button" :class="{ active: view === 'search' }" @click="view = 'search'">Suche</button>
-			<button type="button" :class="{ active: view === 'stats' }" @click="view = 'stats'">Statistik</button>
-			<button type="button" :class="{ active: view === 'settings' }" @click="view = 'settings'">Einstellungen</button>
+			<button type="button" :class="{ active: view === 'timeline' && editorDate === null }" @click="showView('timeline')">Timeline</button>
+			<button type="button" :class="{ active: view === 'calendar' && editorDate === null }" @click="showView('calendar')">Kalender</button>
+			<button type="button" :class="{ active: view === 'onthisday' && editorDate === null }" @click="showView('onthisday')">An diesem Tag</button>
+			<button type="button" :class="{ active: view === 'search' && editorDate === null }" @click="showView('search')">Suche</button>
+			<button type="button" :class="{ active: view === 'stats' && editorDate === null }" @click="showView('stats')">Statistik</button>
+			<button type="button" :class="{ active: view === 'settings' && editorDate === null }" @click="showView('settings')">Einstellungen</button>
 			<button type="button" class="new" @click="openDate(todayIso())">+ Neu</button>
 		</nav>
 
@@ -92,6 +97,15 @@ onMounted(async () => {
 .tagebuch-app {
 	padding: 16px;
 	max-width: 900px;
+	margin: 0 auto;
+	min-height: calc(100vh - var(--header-height, 50px));
+	box-sizing: border-box;
+	background-color: var(--color-main-background);
+	background: color-mix(in srgb, var(--color-main-background) 78%, transparent);
+	-webkit-backdrop-filter: blur(18px) saturate(1.5);
+	backdrop-filter: blur(18px) saturate(1.5);
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
 }
 .tabs {
 	display: flex;
