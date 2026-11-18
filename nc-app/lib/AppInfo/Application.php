@@ -30,10 +30,12 @@ class Application extends App implements IBootstrap {
 
 	public function boot(IBootContext $context): void {
 		// Funktioniert auf allen NC-Versionen (31–35): IJobList::add() dedupliziert.
+		// Achtung: Die konkrete OC\BackgroundJob\JobList hat in NC 35 bei has()/add()
+		// KEIN Default-Argument – das zweite Argument daher immer explizit null.
 		$jobList = $context->getServerContainer()->get(IJobList::class);
 		foreach ([ReminderJob::class, MailInJob::class] as $job) {
-			if (!$jobList->has($job)) {
-				$jobList->add($job);
+			if (!$jobList->has($job, null)) {
+				$jobList->add($job, null);
 			}
 		}
 	}
