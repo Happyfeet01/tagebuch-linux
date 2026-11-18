@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { api, type Entry } from '../api'
+import { decryptPayload, encryptPayload, isEncryptionEnabled, isUnlocked } from '../crypto'
 
 const props = defineProps<{ date: string }>()
 const emit = defineEmits<{ saved: [], closed: [] }>()
@@ -20,10 +21,10 @@ const saving = ref(false)
 const load = async () => {
 	entries.value = await api.day(props.date)
 	templates.value = await api.templates()
-	pick(entries.value[0] ?? null)
+	await pick(entries.value[0] ?? null)
 }
 
-const pick = (entry: Entry | null) => {
+const pick = async (entry: Entry | null) => {
 	selected.value = entry
 	if (entry === null) {
 		heading.value = ''
@@ -34,28 +35,58 @@ const pick = (entry: Entry | null) => {
 		attachments.value = []
 		return
 	}
+	rating.value = entry.rating
+	attachments.value = [...entry.attachments]
+	if (entry.encrypted === 1) {
+		const payload = isEncryptionEnabled() && isUnlocked() ? await decryptPayload(entry.body) : null
+		if (payload) {
+			heading.value = payload.heading
+			body.value = payload.body
+			tagsInput.value = payload.tags.join(', ')
+			locationInput.value = payload.location?.name ?? ''
+		} else {
+			heading.value = ''
+			body.value = '[verschlüsselt – in den Einstellungen entsperren]'
+			tagsInput.value = ''
+			locationInput.value = ''
+		}
+		return
+	}
 	heading.value = entry.heading
 	body.value = entry.body
-	rating.value = entry.rating
 	tagsInput.value = entry.tags.join(', ')
 	locationInput.value = entry.location?.name ?? ''
-	attachments.value = [...entry.attachments]
 }
 
 const save = async () => {
 	saving.value = true
 	message.value = ''
 	try {
-		await api.saveEntry({
+		const tags = tagsInput.value.split(',').map((t) => t.trim()).filter(Boolean)
+		const location = locationInput.value ? { name: locationInput.value } : null
+		let payload: Record<string, unknown> = {
 			date: props.date,
 			time: selected.value?.time ?? (entries.value.length > 0 ? new Date().toTimeString().slice(0, 5) : null),
 			heading: heading.value,
 			body: body.value,
 			rating: rating.value,
-			tags: tagsInput.value.split(',').map((t) => t.trim()).filter(Boolean),
-			location: locationInput.value ? { name: locationInput.value } : null,
+			tags,
+			trackers: {},
+			location,
 			attachments: attachments.value,
-		})
+			encrypted: 0,
+		}
+		if (isEncryptionEnabled() && isUnlocked()) {
+			const cipher = await encryptPayload({
+				heading: heading.value,
+				body: body.value,
+				tags,
+				trackers: {},
+				location,
+			})
+			payload = { ...payload, heading: '', body: cipher, tags: [], trackers: {}, location: null, encrypted: 1 }
+		}
+		await api.saveEntry(payload as Partial<Entry> & { date: string })
 		message.value = 'Gespeichert.'
 		emit('saved')
 		await load()

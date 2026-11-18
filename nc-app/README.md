@@ -60,10 +60,14 @@ CI (GitHub Actions) führt php -l, PHPUnit und den Node-Build aus.
   – eindeutiger Index auf (user_id, entry_date, entry_time)
 - `*dbprefix*tagebuch_templates`: id, user_id, name, body, updated_at
 
-**Hinweis zur Verschlüsselung:** Auch DB-Tabellen sind in Nextcloud at rest nicht
-verschlüsselt. Echte Privatsphäre erreicht die App, indem sie Einträge selbst pro Benutzer
-verschlüsselt (libsodium, Schlüssel aus dem NC-Login abgeleitet) – als nächster Schritt
-geplant. Anhänge liegen derzeit noch als Dateien in `Tagebuch/<datum>-assets/`.
+**Verschlüsselung (clientseitig):** In den App-Einstellungen kann eine AES-GCM-Verschlüsselung
+mit App-Passwort aktiviert werden (PBKDF2, 100.000 Runden, Schlüssel nur im Browser). Dabei werden
+Überschrift, Text, Tags, Tracker und Ort als ein JSON-Payload verschlüsselt in der DB gespeichert
+(`encrypted=1`) – die Datenbank enthält dann nur Ciphertext. Datum/Uhrzeit/Bewertung bleiben als
+Metadaten im Klartext (Kalender/Streaks), serverseitige Volltextsuche entfällt dafür (Suche läuft dann
+clientseitig über die entschlüsselten Einträge). Anhänge liegen derzeit noch unverschlüsselt als
+Dateien in `Tagebuch/<datum>-assets/` (nächster Schritt). Ohne App-Passwort sind verschlüsselte
+Einträge nicht wiederherstellbar.
 
 ## Lizenz
 

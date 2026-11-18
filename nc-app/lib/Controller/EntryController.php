@@ -70,6 +70,7 @@ class EntryController extends OCSController {
 		?array $trackers = null,
 		?array $location = null,
 		?array $attachments = null,
+		?int $encrypted = null,
 	): DataResponse {
 		try {
 			$entry = $this->entryService->saveEntry([
@@ -82,6 +83,7 @@ class EntryController extends OCSController {
 				'trackers' => $trackers ?? [],
 				'location' => $location,
 				'attachments' => $attachments ?? [],
+				'encrypted' => $encrypted ?? 0,
 			]);
 			return new DataResponse($entry);
 		} catch (\InvalidArgumentException $e) {
