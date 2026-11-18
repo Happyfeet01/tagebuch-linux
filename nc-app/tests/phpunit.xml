@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="bootstrap.php" colors="true" cacheDirectory=".phpunit.cache" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd">
+	<testsuite name="Tagebuch App Tests">
+		<directory suffix="Test.php">./unit</directory>
+	</testsuite>
+	<source>
+		<include>
+			<directory suffix=".php">../appinfo</directory>
+			<directory suffix=".php">../lib</directory>
+		</include>
+	</source>
+</phpunit>

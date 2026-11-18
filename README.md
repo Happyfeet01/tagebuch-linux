@@ -166,3 +166,9 @@ liegt in `tagebuch/app.py` und `tagebuch/ui/`.
 ## Lizenz
 
 MIT – siehe [LICENSE](LICENSE).
+
+## Nextcloud-App (nc-app/)
+
+Unter [nc-app/](nc-app/README.md) liegt die Nextcloud-App „Tagebuch“ (PHP + Vue, PR #2):
+Einträge in der NC-Datenbank (optional clientseitig AES-GCM-verschlüsselt), Anhänge als Dateien,
+Erinnerungs-Mail täglich 20:00 Uhr + Mail-in (IMAP), PWA fürs iPhone.
