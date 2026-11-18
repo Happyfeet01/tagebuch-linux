@@ -29,6 +29,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLocation(?string $location)
  * @method string getAttachments()
  * @method void setAttachments(string $attachments)
+ * @method ?int getEncrypted()
+ * @method void setEncrypted(?int $encrypted)
  * @method ?string getCreatedAt()
  * @method void setCreatedAt(?string $createdAt)
  * @method ?string getModifiedAt()
@@ -46,6 +48,7 @@ class Entry extends Entity implements \JsonSerializable {
 	protected string $trackers = '[]';
 	protected ?string $location = null;
 	protected string $attachments = '[]';
+	protected ?int $encrypted = 0;
 	protected ?string $createdAt = null;
 	protected ?string $modifiedAt = null;
 
@@ -61,6 +64,7 @@ class Entry extends Entity implements \JsonSerializable {
 			'trackers' => json_decode($this->trackers, true) ?: [],
 			'location' => $this->location !== null && $this->location !== '' ? json_decode($this->location, true) : null,
 			'attachments' => json_decode($this->attachments, true) ?: [],
+			'encrypted' => (int) ($this->encrypted ?? 0),
 			'created' => $this->createdAt,
 			'modified' => $this->modifiedAt,
 		];
@@ -81,6 +85,7 @@ class Entry extends Entity implements \JsonSerializable {
 		$location = $data['location'] ?? null;
 		$entry->setLocation(is_array($location) ? (string) json_encode($location, JSON_UNESCAPED_UNICODE) : null);
 		$entry->setAttachments((string) json_encode(array_values(array_map('strval', (array) ($data['attachments'] ?? []))), JSON_UNESCAPED_UNICODE));
+		$entry->setEncrypted(isset($data['encrypted']) ? (int) $data['encrypted'] : 0);
 		$entry->setCreatedAt(isset($data['created']) && $data['created'] !== '' ? (string) $data['created'] : null);
 		$entry->setModifiedAt(isset($data['modified']) && $data['modified'] !== '' ? (string) $data['modified'] : null);
 		return $entry;

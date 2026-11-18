@@ -22,6 +22,7 @@ export interface Entry {
 	trackers: Record<string, unknown>
 	location: EntryLocation | null
 	attachments: string[]
+	encrypted?: number
 	created?: string | null
 	modified?: string | null
 }
