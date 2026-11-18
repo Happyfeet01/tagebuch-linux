@@ -21,3 +21,9 @@ def test_gui_entry_without_gi_shows_friendly_hint():
     assert "apt install python3-gi" in result.stderr
     assert "--system-site-packages" in result.stderr
     assert "Traceback" not in result.stderr
+
+
+def test_gui_hint_mentions_adw_typelib():
+    from tagebuch.app import GUI_HINT
+
+    assert "gir1.2-adw-1" in GUI_HINT

@@ -79,7 +79,7 @@ class TagebuchApp(Adw.Application):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", callback)
             self.add_action(action)
-        insert_tpl = Gio.SimpleAction.new_string("insert-template", None)
+        insert_tpl = Gio.SimpleAction.new("insert-template", GLib.VariantType.new("s"))
         insert_tpl.connect("activate", lambda a, param: self._insert_template(param.get_string()))
         self.add_action(insert_tpl)
 

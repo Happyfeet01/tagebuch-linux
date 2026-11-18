@@ -13,8 +13,11 @@ GUI_HINT = (
 
 def main() -> int:
     try:
-        import gi  # noqa: F401
-    except ImportError:
+        import gi
+
+        gi.require_version("Gtk", "4.0")
+        gi.require_version("Adw", "1")
+    except (ImportError, ValueError):
         sys.stderr.write(GUI_HINT + "\n")
         return 1
     from .gui import main as gui_main
