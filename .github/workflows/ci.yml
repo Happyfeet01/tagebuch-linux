@@ -24,6 +24,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Abhaengigkeiten installieren (Lockfile)
         run: pip install -r requirements-dev.txt
+      - name: Paket installieren (src-Layout)
+        run: pip install .
       - name: Lint
         run: ruff check src tests
       - name: Syntax/Compile
