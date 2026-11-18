@@ -6,6 +6,12 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $stubs = [
 	\OCP\IConfig::class => __DIR__ . '/stubs/OCP/IConfig.php',
+	\OCP\IUser::class => __DIR__ . '/stubs/OCP/IUser.php',
+	\OCP\IUserSession::class => __DIR__ . '/stubs/OCP/IUserSession.php',
+	\OCP\Files\Node::class => __DIR__ . '/stubs/OCP/Files/Node.php',
+	\OCP\Files\File::class => __DIR__ . '/stubs/OCP/Files/File.php',
+	\OCP\Files\Folder::class => __DIR__ . '/stubs/OCP/Files/Folder.php',
+	\OCP\Files\IRootFolder::class => __DIR__ . '/stubs/OCP/Files/IRootFolder.php',
 	\OCP\AppFramework\App::class => __DIR__ . '/stubs/OCP/AppFramework/App.php',
 	\OCP\AppFramework\Bootstrap\IBootstrap::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IBootstrap.php',
 	\OCP\AppFramework\Bootstrap\IRegistrationContext::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IRegistrationContext.php',

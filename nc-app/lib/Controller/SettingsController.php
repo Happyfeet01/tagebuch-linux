@@ -17,7 +17,7 @@ use OCP\IUserSession;
  * @psalm-suppress UnusedClass
  */
 class SettingsController extends OCSController {
-	private const USER_KEYS = ['reminder_enabled', 'theme', 'accent', 'font'];
+	private const USER_KEYS = ['reminder_enabled', 'theme', 'accent', 'font', 'photo_folder'];
 
 	public function __construct(
 		string $appName,
@@ -54,10 +54,10 @@ class SettingsController extends OCSController {
 
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/api/settings')]
-	public function set(?string $reminder_enabled = null, ?string $theme = null, ?string $accent = null, ?string $font = null): DataResponse {
+	public function set(?string $reminder_enabled = null, ?string $theme = null, ?string $accent = null, ?string $font = null, ?string $photo_folder = null): DataResponse {
 		$uid = $this->userId();
 		$values = [];
-		foreach (['reminder_enabled' => $reminder_enabled, 'theme' => $theme, 'accent' => $accent, 'font' => $font] as $key => $value) {
+		foreach (['reminder_enabled' => $reminder_enabled, 'theme' => $theme, 'accent' => $accent, 'font' => $font, 'photo_folder' => $photo_folder] as $key => $value) {
 			if ($value !== null) {
 				$this->config->setUserValue($uid, Application::APP_ID, $key, $value);
 				$values[$key] = $value;

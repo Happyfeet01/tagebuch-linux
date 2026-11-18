@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Anhänge werden bei aktiver clientseitiger Verschlüsselung ebenfalls verschlüsselt (`<name>.enc`, AES-GCM) hochgeladen und in der App entschlüsselt angezeigt (Bild-/Video-Vorschau, Download)
+- Neuer Download-Endpunkt für Anhänge: `GET /api/entry/{date}/attachment/{name}`
+- „An diesem Tag“ zeigt jetzt Fotos/Videos aus einem konfigurierbaren Foto-Ordner (`photo_folder`, Struktur `<Jahr>/<Monat>/`, optional `<Tag>/`) – Endpunkte `GET /api/on-this-day/photos` und `GET /api/photo?path=...`
+- Einstellungsfeld für den Foto-Ordner
+
 ## 0.1.0
 
 - Erstversion: Nextcloud-App „Tagebuch“

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { api, type Entry } from '../api'
-import { decryptPayload, encryptPayload, isEncryptionEnabled, isUnlocked } from '../crypto'
+import { attachmentName, decryptFile, decryptPayload, encryptPayload, isEncryptedAttachment, isEncryptionEnabled, isUnlocked, mimeForName } from '../crypto'
 
 const props = defineProps<{ date: string }>()
 const emit = defineEmits<{ saved: [], closed: [] }>()
@@ -109,9 +109,42 @@ const upload = async (event: Event) => {
 	const input = event.target as HTMLInputElement
 	const file = input.files?.[0]
 	if (!file) return
-	const res = await api.attachment(props.date, file)
-	attachments.value.push(res.path)
-	input.value = ''
+	message.value = ''
+	try {
+		const res = await api.attachment(props.date, file)
+		attachments.value.push(res.path)
+	} catch (e) {
+		message.value = 'Upload fehlgeschlagen: ' + (e as Error).message
+	} finally {
+		input.value = ''
+	}
+}
+
+const preview = ref<{ url: string, kind: 'image' | 'video' | 'file', name: string } | null>(null)
+
+const openAttachment = async (path: string) => {
+	message.value = ''
+	try {
+		const stored = path.split('/').pop() ?? path
+		const orig = attachmentName(path)
+		const buf = await api.attachmentData(props.date, stored)
+		let blob: Blob
+		if (isEncryptedAttachment(stored)) {
+			if (!isEncryptionEnabled() || !isUnlocked()) {
+				message.value = 'Anhang ist verschlüsselt – bitte in den Einstellungen entsperren.'
+				return
+			}
+			blob = await decryptFile(buf, orig)
+		} else {
+			blob = new Blob([buf], { type: mimeForName(orig) })
+		}
+		if (preview.value) URL.revokeObjectURL(preview.value.url)
+		const url = URL.createObjectURL(blob)
+		const kind = blob.type.startsWith('image/') ? 'image' : blob.type.startsWith('video/') ? 'video' : 'file'
+		preview.value = { url, kind, name: orig }
+	} catch {
+		message.value = 'Anhang konnte nicht geladen werden.'
+	}
 }
 
 const insertTemplate = async (name: string) => {
@@ -172,8 +205,15 @@ onMounted(load)
 			</select>
 		</div>
 		<ul v-if="attachments.length" class="attachments">
-			<li v-for="a in attachments" :key="a">{{ a }}</li>
+			<li v-for="a in attachments" :key="a">
+				<button type="button" class="attach-link" @click="openAttachment(a)">{{ attachmentName(a) }}</button>
+			</li>
 		</ul>
+		<div v-if="preview" class="preview">
+			<img v-if="preview.kind === 'image'" :src="preview.url" :alt="preview.name">
+			<video v-else-if="preview.kind === 'video'" :src="preview.url" controls></video>
+			<a v-else :href="preview.url" :download="preview.name">{{ preview.name }} herunterladen</a>
+		</div>
 	</div>
 </template>
 
@@ -241,5 +281,25 @@ onMounted(load)
 	padding-left: 18px;
 	color: var(--color-text-maxcontrast);
 	font-size: 0.85em;
+}
+.attach-link {
+	border: none;
+	background: none;
+	padding: 0;
+	cursor: pointer;
+	color: var(--color-primary-element);
+	text-decoration: underline;
+	font-size: inherit;
+}
+.preview {
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+	padding: 8px;
+	max-width: 100%;
+}
+.preview img, .preview video {
+	max-width: 100%;
+	max-height: 320px;
+	display: block;
 }
 </style>
