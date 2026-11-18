@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+
+- Fix: `OC\BackgroundJob\JobList::has()/add()` verlangen in NC 35 zwingend 2 Argumente („Too few arguments … exactly 2 expected“, App konnte nicht booten). `Application::boot()` übergibt jetzt explizit `null` als zweites Argument; IJobList-Stub entsprechend strenger, ApplicationTest assertet die 2-Argumnent-Aufrufe
+
 ## 0.2.3
 
 - Fix PWA/Service-Worker: bisher cache-first mit festem Cache `tagebuch-v1` – Updates kamen auf dem iPhone nie an. Jetzt network-first (`fetch` zuerst, Cache nur als Offline-Fallback), beim Activate werden alle alten Caches gelöscht, Cache-Name `tagebuch-v2`; `sw.js` und `manifest.webmanifest` mit `Cache-Control: no-cache`

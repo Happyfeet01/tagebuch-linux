@@ -34,11 +34,11 @@ class ApplicationTest extends TestCase {
 		$jobList = $this->createMock(IJobList::class);
 		$jobList->method('has')->willReturn(false);
 		$added = [];
-		$jobList->method('add')->willReturnCallback(static function (string $job) use (&$added): void {
-			$added[] = $job;
+		$jobList->method('add')->willReturnCallback(static function (string $job, $argument) use (&$added): void {
+			$added[] = [$job, $argument];
 		});
 		(new Application())->boot($this->bootContext($jobList));
-		$this->assertSame([ReminderJob::class, MailInJob::class], $added);
+		$this->assertSame([[ReminderJob::class, null], [MailInJob::class, null]], $added);
 	}
 
 	public function testBootSkipsAlreadyRegisteredJobs(): void {
