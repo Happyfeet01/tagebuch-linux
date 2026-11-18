@@ -66,6 +66,19 @@ class EntryMapper extends QBMapper {
 		}
 	}
 
+	public function findById(string $userId, int $id): ?Entry {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+		try {
+			return $this->findEntity($qb);
+		} catch (DoesNotExistException $e) {
+			return null;
+		}
+	}
+
 	public function saveEntry(Entry $entry): Entry {
 		if ($entry->getId() === null) {
 			return $this->insert($entry);

@@ -63,7 +63,8 @@ class EntryController extends OCSController {
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/api/entry')]
 	public function save(
-		string $date,
+		?int $id = null,
+		string $date = '',
 		?string $time = null,
 		string $heading = '',
 		string $body = '',
@@ -76,6 +77,7 @@ class EntryController extends OCSController {
 	): DataResponse {
 		try {
 			$entry = $this->entryService->saveEntry([
+				'id' => $id,
 				'date' => $date,
 				'time' => $time,
 				'heading' => $heading,

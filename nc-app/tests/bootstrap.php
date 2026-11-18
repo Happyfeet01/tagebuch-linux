@@ -19,6 +19,7 @@ $stubs = [
 	\OCP\AppFramework\Bootstrap\IRegistrationContext::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IRegistrationContext.php',
 	\OCP\AppFramework\Bootstrap\IBootContext::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IBootContext.php',
 	\OCP\AppFramework\Db\Entity::class => __DIR__ . '/stubs/OCP/AppFramework/Db/Entity.php',
+	\OCP\AppFramework\Db\QBMapper::class => __DIR__ . '/stubs/OCP/AppFramework/Db/QBMapper.php',
 ];
 foreach ($stubs as $class => $file) {
 	if (!class_exists($class) && !interface_exists($class)) {

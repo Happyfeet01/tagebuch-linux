@@ -70,6 +70,14 @@ class EntryService {
 		if ($rating !== null && ((int) $rating < 1 || (int) $rating > 5)) {
 			throw new \InvalidArgumentException('rating muss zwischen 1 und 5 liegen');
 		}
+		if (!empty($entry['id'])) {
+			$existing = $this->entryMapper->findById($this->userId(), (int) $entry['id']);
+			if ($existing === null) {
+				$entry['id'] = null;
+			} elseif (empty($entry['created'])) {
+				$entry['created'] = $existing->getCreatedAt();
+			}
+		}
 		$now = (new \DateTimeImmutable('now'))->format('Y-m-d\TH:i:sP');
 		if (empty($entry['created'])) {
 			$entry['created'] = $now;
