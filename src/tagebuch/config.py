@@ -66,13 +66,26 @@ class Config:
         )
         os.chmod(self.path, 0o600)
 
-    def get(self, section: str, key: str = ""):
-        value = self.data.get(section, {})
-        if key:
+    def get(self, *args):
+        if len(args) == 1:
+            section, _, key = args[0].partition(".")
+        else:
+            section, key = args[0], args[1] if len(args) > 1 else ""
+        value = self.data.get(section)
+        if key and isinstance(value, dict):
             return value.get(key)
         return value
 
-    def set(self, section: str, key: str, value) -> None:
+    def set(self, *args) -> None:
+        if len(args) == 2:
+            section, _, key = args[0].partition(".")
+            if not key:
+                self.data[section] = args[1]
+                self.save()
+                return
+            value = args[1]
+        else:
+            section, key, value = args
         self.data.setdefault(section, {})[key] = value
         self.save()
 

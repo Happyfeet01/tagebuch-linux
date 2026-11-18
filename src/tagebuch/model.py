@@ -124,13 +124,13 @@ class Entry:
         return len([word for word in text.split() if word.strip()])
 
     def to_markdown(self) -> str:
-        meta: dict = {"version": 1, "date": self.date.isoformat()}
+        meta: dict = {"version": 1, "date": self.date}
         if self.time is not None:
             meta["time"] = self.time.strftime("%H:%M")
         if self.created is not None:
-            meta["created"] = self.created.isoformat()
+            meta["created"] = self.created
         if self.modified is not None:
-            meta["modified"] = self.modified.isoformat()
+            meta["modified"] = self.modified
         if self.heading:
             meta["heading"] = self.heading
         if self.rating is not None:
