@@ -18,7 +18,7 @@ class EntryServiceSaveTest extends TestCase {
 	private EntryMapper&MockObject $entryMapper;
 	private EntryService $service;
 
-	private function setUp(): void {
+	protected function setUp(): void {
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('lars');
 		$session = $this->createMock(IUserSession::class);
