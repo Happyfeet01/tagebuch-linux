@@ -110,6 +110,20 @@ Sync-Schaltfläche und Einstellungen (WebDAV, Design, Export/Import).
 
 Lokaler Ordner und Remote-Ordner spiegeln sich 1:1; Anhänge werden mit synchronisiert.
 
+### Achtung: Diariums Sync-Ordner nicht verwenden
+Diariums eigener WebDAV-Sync-Ordner enthält eine **proprietäre, verschlüsselte Datenbank**
+(plus `README.txt`) – **keine `*.md`-Dateien**. Lesbare Markdown-Dateien entstehen bei Diarium
+nur über die **Export-Funktion** der App.
+
+- Richte tagebuch-linux auf einen **eigenen Ordner** in der Nextcloud (z. B. `Tagebuch-linux`),
+  nie auf Diariums Sync-Ordner.
+- Der Sync erkennt Diarium-Ordner am README und **bricht mit Fehlermeldung ab, ohne etwas zu
+  verändern**.
+- Remote-Dateien werden nur gelöscht, wenn diese App sie selbst hochgeladen hat – fremde
+  Dateien (z. B. Diariums Datenbank) bleiben unangetastet.
+- Bestehende Diarium-Einträge übernehmen: in Diarium **Export** (JSON oder Markdown-ZIP)
+  → `tagebuch import <datei>` (bei ZIP: entpacken, dann Ordner importieren).
+
 ## CLI
 
 ```bash

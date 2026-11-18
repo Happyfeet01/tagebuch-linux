@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tagebuch-linux"
-version = "0.1.0"
+version = "0.1.1"
 description = "Privates Tagebuch fuer Linux: taegliche Eintraege als Markdown-Dateien (*.md) in der eigenen Nextcloud (WebDAV) – Funktions-Nachbau von Diarium."
 readme = "README.md"
 license = { text = "MIT" }

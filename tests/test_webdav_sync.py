@@ -154,6 +154,40 @@ def test_templates_sync(env):
     assert (tmp_path / "remote" / ".templates" / name).is_file()
 
 
+DIARIUM_README = (
+    "The files in this folder are used for the Diarium Cloud Sync feature. "
+    "please do not delete, modify or rename them."
+)
+
+
+def test_sync_refuses_diarium_folder(env):
+    store, _, _, engine, tmp_path = env
+    (tmp_path / "remote" / "README.txt").write_text(DIARIUM_README, encoding="utf-8")
+    (tmp_path / "remote" / "syncdata.bin").write_bytes(b"\x1e\xff\xfd\x00binary")
+    store.save_entry(Entry(date=date(2026, 11, 18), body="neuer eintrag"))
+    result = engine.sync()
+    assert any("Diarium" in e for e in result.errors)
+    assert result.uploaded == [] and result.downloaded == []
+    assert not result.deleted_remote and not result.deleted_local
+    assert (tmp_path / "remote" / "syncdata.bin").read_bytes() == b"\x1e\xff\xfd\x00binary"
+    assert (tmp_path / "remote" / "README.txt").is_file()
+    assert not (tmp_path / "local" / "README.txt").exists()
+    assert not (tmp_path / "local" / "syncdata.bin").exists()
+
+
+def test_foreign_remote_file_survives_local_deletion(env):
+    store, _, _, engine, tmp_path = env
+    (tmp_path / "remote" / "fremd.txt").write_text("fremde datei", encoding="utf-8")
+    first = engine.sync()
+    assert "fremd.txt" in first.downloaded
+    assert (tmp_path / "local" / "fremd.txt").is_file()
+
+    (tmp_path / "local" / "fremd.txt").unlink()
+    second = engine.sync()
+    assert "fremd.txt" not in second.deleted_remote
+    assert (tmp_path / "remote" / "fremd.txt").read_text(encoding="utf-8") == "fremde datei"
+
+
 def test_sync_unreachable_records_error(tmp_path):
     store = JournalStore(tmp_path / "local")
     store.init()

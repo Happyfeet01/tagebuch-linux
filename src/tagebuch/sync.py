@@ -37,6 +37,10 @@ def conflict_name(rel: str, host: str) -> str:
     return f"{path.stem}.conflict-{host}{path.suffix}"
 
 
+DIARIUM_MARKER = b"diarium"
+README_NAMES = {"readme", "readme.txt", "readme.md"}
+
+
 class SyncEngine:
     def __init__(self, store: JournalStore, client: WebDAVClient, state_path: str | Path):
         self.store = store
@@ -80,7 +84,7 @@ class SyncEngine:
         new_etag = self.client.upload(rel, local_path.read_bytes(), etag=etag) or (
             old.get("etag") if old else ""
         )
-        new_state[rel] = {"etag": new_etag, "sha256": sha256_file(local_path)}
+        new_state[rel] = {"etag": new_etag, "sha256": sha256_file(local_path), "ours": True}
         result.uploaded.append(rel)
 
     def _download(self, rel: str, item: RemoteItem, result: SyncResult, new_state: dict) -> None:
@@ -88,7 +92,7 @@ class SyncEngine:
         target = self.store.root / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
-        new_state[rel] = {"etag": item.etag, "sha256": sha256_file(target)}
+        new_state[rel] = {"etag": item.etag, "sha256": sha256_file(target), "ours": False}
         result.downloaded.append(rel)
 
     def _handle_conflict(self, rel: str, local_path: Path, item: RemoteItem,
@@ -101,6 +105,20 @@ class SyncEngine:
         self._upload(rel, local_path, None, result, new_state, force=True)
         result.conflicts.append(rel)
 
+    def _looks_like_diarium_folder(self, remote: dict) -> bool:
+        for rel, item in remote.items():
+            if item.is_dir or "/" in rel:
+                continue
+            name = Path(rel).name.lower()
+            if name in README_NAMES:
+                try:
+                    head = self.client.download(rel)[:4096].lower()
+                except Exception:
+                    continue
+                if DIARIUM_MARKER in head:
+                    return True
+        return False
+
     def sync(self) -> SyncResult:
         result = SyncResult()
         state = self._load_state()
@@ -108,6 +126,14 @@ class SyncEngine:
             remote = self.client.list_tree()
         except Exception as exc:
             result.errors.append(f"Remote nicht erreichbar: {exc}")
+            return result
+        if self._looks_like_diarium_folder(remote):
+            result.errors.append(
+                "Remote-Ordner ist ein Diarium-Cloud-Sync-Ordner (proprietaere Datenbank). "
+                "Bitte eigenen Ordner verwenden (z. B. 'Tagebuch-linux') und Diarium-Eintraege "
+                "ueber Diarium-Export (JSON/Markdown) mit 'tagebuch import' uebernehmen. "
+                "Sync abgebrochen, es wurde nichts veraendert."
+            )
             return result
         local = self._local_files()
         new_state: dict = {}
@@ -134,7 +160,11 @@ class SyncEngine:
                     elif remote_changed:
                         self._download(rel, item, result, new_state)
                     else:
-                        new_state[rel] = {"etag": item.etag, "sha256": local_hash}
+                        new_state[rel] = {
+                            "etag": item.etag,
+                            "sha256": local_hash,
+                            "ours": bool(old.get("ours")) if old else False,
+                        }
                 elif local_path is not None:
                     if remote_deleted and not local_changed:
                         local_path.unlink()
@@ -143,8 +173,9 @@ class SyncEngine:
                         self._upload(rel, local_path, old, result, new_state)
                 elif item is not None:
                     if local_deleted and not remote_changed:
-                        self.client.delete(rel)
-                        result.deleted_remote.append(rel)
+                        if old.get("ours"):
+                            self.client.delete(rel)
+                            result.deleted_remote.append(rel)
                     else:
                         self._download(rel, item, result, new_state)
             except Exception as exc:
