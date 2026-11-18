@@ -65,6 +65,7 @@ const save = async () => {
 		const tags = tagsInput.value.split(',').map((t) => t.trim()).filter(Boolean)
 		const location = locationInput.value ? { name: locationInput.value } : null
 		let payload: Record<string, unknown> = {
+			id: selected.value?.id ?? null,
 			date: props.date,
 			time: selected.value?.time ?? (entries.value.length > 0 ? new Date().toTimeString().slice(0, 5) : null),
 			heading: heading.value,
