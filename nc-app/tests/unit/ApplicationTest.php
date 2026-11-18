@@ -43,8 +43,7 @@ class ApplicationTest extends TestCase {
 
 	public function testBootSkipsAlreadyRegisteredJobs(): void {
 		$jobList = $this->createMock(IJobList::class);
-		$jobList->method('has')->with(ReminderJob::class, null)->willReturn(true);
-		$jobList->method('has')->with(MailInJob::class, null)->willReturn(true);
+		$jobList->method('has')->willReturn(true);
 		$jobList->expects($this->never())->method('add');
 		(new Application())->boot($this->bootContext($jobList));
 	}
