@@ -53,7 +53,6 @@ def entry_row(entry: Entry, on_open) -> Gtk.ListBoxRow:
 
     row.set_child(box)
     row.entry = entry
-    row.connect("activated", lambda r: on_open(r.entry))
     return row
 
 
@@ -77,8 +76,14 @@ class TimelineView(Gtk.Box):
         self.listbox.set_margin_start(12)
         self.listbox.set_margin_end(12)
         self.listbox.set_margin_bottom(12)
+        self.listbox.connect("row-activated", self._on_row_activated)
         scrolled.set_child(self.listbox)
         self.append(scrolled)
+
+    def _on_row_activated(self, listbox: Gtk.ListBox, row: Gtk.ListBoxRow) -> None:
+        entry = getattr(row, "entry", None)
+        if entry is not None:
+            self.on_open_entry(entry)
 
     def refresh(self, entries: list[Entry]) -> None:
         while True:
