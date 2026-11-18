@@ -1,0 +1,65 @@
+name: CI nc-app
+
+on:
+  pull_request:
+    paths:
+      - "nc-app/**"
+      - ".github/workflows/ci-nc-app.yml"
+  push:
+    branches:
+      - "vibe/**"
+    paths:
+      - "nc-app/**"
+      - ".github/workflows/ci-nc-app.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, curl, dom, intl, json, zip, imap
+          tools: composer
+      - name: PHP-Syntax lint
+        working-directory: nc-app
+        run: composer run lint
+
+  php-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, curl, dom, intl, json, zip, imap
+          tools: composer
+      - name: Abhaengigkeiten installieren
+        working-directory: nc-app
+        run: composer install --no-interaction --no-progress
+      - name: PHPUnit
+        working-directory: nc-app
+        run: composer run test:unit
+
+  node-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nc-app/package-lock.json
+      - name: Abhaengigkeiten installieren
+        working-directory: nc-app
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript-Check
+        working-directory: nc-app
+        run: npm run tsc
+      - name: Build
+        working-directory: nc-app
+        run: npm run build
