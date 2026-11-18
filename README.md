@@ -73,11 +73,15 @@ in der Nextcloud-Notes-App, in Obsidian oder jedem Editor les- und bearbeitbar.
 
 ```bash
 sudo apt install python3-gi python3-gi-cairo gir1.2-adw-1 gir1.2-gtk-4.0 gir1.2-gtksource-5
-python3 -m venv .venv && . .venv/bin/activate
+python3 -m venv --system-site-packages .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt   # oder nur: pip install .
 tagebuch-gui                          # GUI starten
 tagebuch --help                       # CLI
 ```
+
+**Wichtig:** `--system-site-packages` ist nötig, damit das venv das systemweit installierte
+`gi` (PyGObject aus `python3-gi`) sieht. Ohne apt-Pakete meldet `tagebuch-gui` statt eines
+Tracebacks einen Installationshinweis.
 
 Nur CLI ohne GUI: `pip install .` genügt (requests + PyYAML), kein GTK nötig.
 
