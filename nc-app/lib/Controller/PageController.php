@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Tagebuch\Controller;
 
 use OCA\Tagebuch\AppInfo\Application;
+use OCA\Tagebuch\Service\PwaScript;
 use OCA\Tagebuch\Service\TokenService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -76,34 +77,13 @@ class PageController extends Controller {
 			'icons' => [
 				['src' => $icon, 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any'],
 			],
-		]);
+		], Http::STATUS_OK, ['Cache-Control' => 'no-cache']);
 	}
 
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[OpenAPI(OpenAPI::SCOPE_IGNORE)]
 	public function sw(): TextResponse {
-		$js = <<<'JS'
-const CACHE = 'tagebuch-v1';
-self.addEventListener('install', (event) => {
-	self.skipWaiting();
-});
-self.addEventListener('activate', (event) => {
-	event.waitUntil(self.clients.claim());
-});
-self.addEventListener('fetch', (event) => {
-	const url = new URL(event.request.url);
-	if (url.pathname.startsWith('/apps/tagebuch/')) {
-		event.respondWith(
-			caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-				const copy = response.clone();
-				caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-				return response;
-			}))
-		);
-	}
-});
-JS;
-		return new TextResponse($js, Http::STATUS_OK, ['Content-Type' => 'application/javascript']);
+		return new TextResponse(PwaScript::js(), Http::STATUS_OK, ['Content-Type' => 'application/javascript', 'Cache-Control' => 'no-cache']);
 	}
 }

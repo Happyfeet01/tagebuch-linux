@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3
+
+- Fix PWA/Service-Worker: bisher cache-first mit festem Cache `tagebuch-v1` – Updates kamen auf dem iPhone nie an. Jetzt network-first (`fetch` zuerst, Cache nur als Offline-Fallback), beim Activate werden alle alten Caches gelöscht, Cache-Name `tagebuch-v2`; `sw.js` und `manifest.webmanifest` mit `Cache-Control: no-cache`
+- SW-JS ausgelagert nach `PwaScript::js()` + neuer `PwaScriptTest` (network-first-Reihenfolge, Cache-Purge, Scope)
+
 ## 0.2.2
 
 - Fix: `Application::register()` rief `IRegistrationContext::registerBackgroundJob()` auf – auf NC 35 stellt der Coordinator dort ein anonymes Context-Objekt ohne diese Methode bereit („Call to undefined method …@anonymous::registerBackgroundJob()“ im Log). Jetzt per `method_exists()` guarded; die Jobs werden zusätzlich in `boot()` über `OCP\BackgroundJob\IJobList::add()` registriert (funktioniert auf NC 31–35, dedupliziert via `has()`)
