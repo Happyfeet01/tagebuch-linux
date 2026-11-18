@@ -12,7 +12,9 @@ class TokenServiceTest extends TestCase {
 	private function makeService(array &$store): TokenService {
 		$config = $this->createMock(IConfig::class);
 		$config->method('getAppValue')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => $store[$key] ?? $default
+			static function (string $app, string $key, string $default = '') use (&$store): string {
+				return $store[$key] ?? $default;
+			}
 		);
 		$config->method('setAppValue')->willReturnCallback(
 			static function (string $app, string $key, string $value) use (&$store): void {
