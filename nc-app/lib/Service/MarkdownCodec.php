@@ -155,14 +155,15 @@ final class MarkdownCodec {
 							continue;
 						}
 						$ci = strlen($l) - strlen(ltrim($l, ' '));
-						if ($ci <= $curIndent) {
+						$isListItem = str_starts_with(trim($l), '- ');
+						if ($ci < $curIndent || ($ci === $curIndent && !$isListItem)) {
 							break;
 						}
 						if ($childIndent === null) {
 							$childIndent = $ci;
-							$isList = str_starts_with(trim($l), '- ');
+							$isList = $isListItem;
 						}
-						if ($ci !== $childIndent) {
+						if ($ci !== $childIndent || ($isList && !$isListItem)) {
 							break;
 						}
 						$items[] = $l;
