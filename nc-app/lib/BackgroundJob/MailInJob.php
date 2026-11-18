@@ -12,7 +12,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\Files\IRootFolder;
 use OCP\IConfig;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 use OCP\IUserSession;
 
 class MailInJob extends TimedJob {
@@ -22,7 +22,7 @@ class MailInJob extends TimedJob {
 		private IRootFolder $rootFolder,
 		private IUserSession $userSession,
 		private TokenService $tokens,
-		private ILogger $logger,
+		private LoggerInterface $logger,
 	) {
 		parent::__construct($time);
 		$this->setInterval(300);

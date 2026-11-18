@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Tagebuch\Controller;
 
 use OCA\Tagebuch\AppInfo\Application;
+use OCA\Tagebuch\Http\ContentResponse;
 use OCA\Tagebuch\Service\PwaScript;
 use OCA\Tagebuch\Service\TokenService;
 use OCP\AppFramework\Controller;
@@ -14,8 +15,8 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\StreamResponse;
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Http\TextResponse;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\Util;
@@ -83,7 +84,7 @@ class PageController extends Controller {
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[OpenAPI(OpenAPI::SCOPE_IGNORE)]
-	public function sw(): TextResponse {
-		return new TextResponse(PwaScript::js(), Http::STATUS_OK, ['Content-Type' => 'application/javascript', 'Cache-Control' => 'no-cache']);
+	public function sw(): StreamResponse {
+		return ContentResponse::stream(PwaScript::js(), 'application/javascript', null, true);
 	}
 }
