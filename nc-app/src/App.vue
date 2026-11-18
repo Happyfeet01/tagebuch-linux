@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { api, type Entry } from './api'
 import EntryList from './components/EntryList.vue'
 import CalendarView from './components/CalendarView.vue'
+import OnThisDayView from './components/OnThisDayView.vue'
 import EditorView from './components/EditorView.vue'
 import SearchView from './components/SearchView.vue'
 import StatsView from './components/StatsView.vue'
@@ -74,10 +75,9 @@ onMounted(async () => {
 					@open="openEntry"
 				/>
 				<CalendarView v-else-if="view === 'calendar'" :entries="entries" @select="openDate" />
-				<EntryList
+				<OnThisDayView
 					v-else-if="view === 'onthisday'"
 					:entries="onThisDayEntries"
-					empty-text="Keine Einträge an diesem Tag in früheren Jahren."
 					@open="openEntry"
 				/>
 				<SearchView v-else-if="view === 'search'" @open="openEntry" />

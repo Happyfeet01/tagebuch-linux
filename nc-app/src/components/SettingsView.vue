@@ -56,6 +56,7 @@ const save = async () => {
 			theme: settings.value.theme,
 			accent: settings.value.accent,
 			font: settings.value.font,
+			photo_folder: settings.value.photo_folder,
 		})
 		message.value = 'Gespeichert.'
 	} catch {
@@ -87,6 +88,15 @@ const save = async () => {
 				<option value="dark">Dunkel</option>
 			</select>
 		</label>
+		<label class="row">
+			Foto-Ordner für „An diesem Tag“:
+			<input v-model="settings.photo_folder" type="text" placeholder="z. B. Fotos" class="photo-folder">
+		</label>
+		<p class="hint">
+			Fotos/Videos aus diesem Ordner (Struktur <code>&lt;Ordner&gt;/&lt;Jahr&gt;/&lt;Monat&gt;/</code>,
+			optional mit Tages-Unterordner <code>&lt;Tag&gt;</code>) werden in der Ansicht
+			„An diesem Tag“ für frühere Jahre angezeigt.
+		</p>
 		<button type="button" @click="save">Speichern</button>
 		<p v-if="message" class="message">{{ message }}</p>
 
@@ -122,6 +132,14 @@ const save = async () => {
 }
 .warn {
 	color: var(--color-warning);
+}
+.hint {
+	color: var(--color-text-maxcontrast);
+	font-size: 0.85em;
+	margin: 0;
+}
+.photo-folder {
+	flex: 1;
 }
 .message {
 	color: var(--color-success);

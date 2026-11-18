@@ -1,5 +1,6 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { encryptFile, isEncryptionEnabled, isUnlocked } from './crypto'
 
 type Ocs<T> = { ocs: { data: T } }
 
@@ -32,7 +33,14 @@ export interface Settings {
 	theme: string
 	accent: string
 	font: string
+	photo_folder: string
 	email: string
+}
+
+export interface Photo {
+	path: string
+	name: string
+	year: string
 }
 
 export interface Stats {
@@ -61,11 +69,23 @@ export const api = {
 	templates: () => unwrap<string[]>(axios.get(generateUrl('/apps/tagebuch/api/templates'))),
 	template: (name: string) => unwrap<{ name: string, body: string }>(axios.get(generateUrl('/apps/tagebuch/api/templates/' + encodeURIComponent(name)))),
 	saveTemplate: (name: string, body: string) => unwrap<{ name: string }>(axios.post(generateUrl('/apps/tagebuch/api/templates'), { name, body })),
-	attachment: (date: string, file: File) => {
+	attachment: async (date: string, file: File) => {
+		let upload = file
+		if (isEncryptionEnabled()) {
+			if (!isUnlocked()) throw new Error('Tresor ist gesperrt – Anhang kann nicht verschlüsselt werden.')
+			upload = await encryptFile(file)
+		}
 		const fd = new FormData()
-		fd.append('file', file)
+		fd.append('file', upload, upload.name)
 		return unwrap<{ path: string }>(axios.post(generateUrl(`/apps/tagebuch/api/entry/${date}/attachment`), fd))
 	},
+	attachmentData: (date: string, name: string) =>
+		axios.get(generateUrl(`/apps/tagebuch/api/entry/${date}/attachment/${encodeURIComponent(name)}`), { responseType: 'arraybuffer' })
+			.then((r) => r.data as ArrayBuffer),
+	onThisDayPhotos: () => unwrap<Photo[]>(axios.get(generateUrl('/apps/tagebuch/api/on-this-day/photos'))),
+	photoData: (path: string) =>
+		axios.get(generateUrl('/apps/tagebuch/api/photo'), { params: { path }, responseType: 'arraybuffer' })
+			.then((r) => r.data as ArrayBuffer),
 	settings: () => unwrap<Settings>(axios.get(generateUrl('/apps/tagebuch/api/settings'))),
 	saveSettings: (s: Partial<Settings>) => unwrap<Record<string, string>>(axios.post(generateUrl('/apps/tagebuch/api/settings'), s)),
 	tokenInfo: (t: string) => unwrap<{ user: string, date: string }>(axios.get(generateUrl('/apps/tagebuch/api/token/' + t))),

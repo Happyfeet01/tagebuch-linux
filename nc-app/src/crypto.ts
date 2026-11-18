@@ -110,3 +110,43 @@ export const decryptPayload = async (cipher: string): Promise<EntryPayload | nul
 		return null
 	}
 }
+
+export const ENC_SUFFIX = '.enc'
+
+export const isEncryptedAttachment = (path: string): boolean => path.endsWith(ENC_SUFFIX)
+
+export const attachmentName = (path: string): string => {
+	const base = path.split('/').pop() ?? path
+	return isEncryptedAttachment(base) ? base.slice(0, -ENC_SUFFIX.length) : base
+}
+
+const MIME_BY_EXT: Record<string, string> = {
+	jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+	webp: 'image/webp', bmp: 'image/bmp', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif',
+	mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', '3gp': 'video/3gpp',
+}
+
+export const mimeForName = (name: string): string => {
+	const dot = name.lastIndexOf('.')
+	const ext = dot === -1 ? '' : name.slice(dot + 1).toLowerCase()
+	return MIME_BY_EXT[ext] ?? 'application/octet-stream'
+}
+
+export const encryptFile = async (file: File): Promise<File> => {
+	if (!sessionKey) throw new Error('tresor verschlossen')
+	const nonce = crypto.getRandomValues(new Uint8Array(12))
+	const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, sessionKey, await file.arrayBuffer()))
+	const out = new Uint8Array(nonce.length + ct.length)
+	out.set(nonce, 0)
+	out.set(ct, nonce.length)
+	return new File([out], file.name + ENC_SUFFIX, { type: 'application/octet-stream' })
+}
+
+export const decryptFile = async (data: ArrayBuffer, name: string): Promise<Blob> => {
+	if (!sessionKey) throw new Error('tresor verschlossen')
+	const bytes = new Uint8Array(data)
+	const nonce = bytes.slice(0, 12)
+	const ct = bytes.slice(12)
+	const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, sessionKey, ct)
+	return new Blob([pt], { type: mimeForName(name) })
+}

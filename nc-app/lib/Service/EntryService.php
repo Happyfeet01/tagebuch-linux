@@ -7,6 +7,7 @@ namespace OCA\Tagebuch\Service;
 use OCA\Tagebuch\Db\Entry;
 use OCA\Tagebuch\Db\EntryMapper;
 use OCA\Tagebuch\Db\TemplateMapper;
+use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
@@ -178,6 +179,23 @@ class EntryService {
 		}
 		$assets->newFile($name, $content);
 		return $assetsName . '/' . $name;
+	}
+
+	/**
+	 * @return array{content: string, mime: string}
+	 */
+	public function getAttachment(string $date, string $name): array {
+		$name = basename($name);
+		$rel = self::ASSETS_DIR . '/' . $date . '-assets/' . $name;
+		$userFolder = $this->rootFolder->getUserFolder($this->userId());
+		if (!$userFolder->nodeExists($rel)) {
+			throw new \InvalidArgumentException('Anhang nicht gefunden');
+		}
+		$node = $userFolder->get($rel);
+		if (!$node instanceof File) {
+			throw new \InvalidArgumentException('Keine Datei');
+		}
+		return ['content' => (string) $node->getContent(), 'mime' => PhotoService::mimeFor($node->getName())];
 	}
 
 	public function listTemplates(): array {
