@@ -81,6 +81,20 @@ tagebuch --help                       # CLI
 
 Nur CLI ohne GUI: `pip install .` genügt (requests + PyYAML), kein GTK nötig.
 
+Optional Desktop-Datei und Icon installieren:
+
+```bash
+sudo install -Dm644 data/io.github.happyfeet01.tagebuchlinux.desktop \
+  /usr/share/applications/io.github.happyfeet01.tagebuchlinux.desktop
+sudo install -Dm644 data/io.github.happyfeet01.tagebuchlinux.svg \
+  /usr/share/icons/hicolor/scalable/apps/io.github.happyfeet01.tagebuchlinux.svg
+```
+
+Die GUI (`tagebuch-gui`) bietet: Kalender mit farbigen Tagen (Bewertung), Timeline,
+„An diesem Tag“, Editor mit Markdown-Text, Sterne-Bewertung, Tags, Ort, Anhängen,
+Vorlagen, Suche, PIN-Sperre mit Auto-Lock, tägliche Erinnerung als Desktop-Benachrichtigung,
+Sync-Schaltfläche und Einstellungen (WebDAV, Design, Export/Import).
+
 ## Nextcloud/WebDAV einrichten
 
 1. In der Nextcloud ein **App-Passwort** anlegen (Profil → Sicherheit → Geräte & Sitzungen).

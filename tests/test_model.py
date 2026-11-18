@@ -95,6 +95,14 @@ def test_rating_validation():
     Entry(date=date(2026, 1, 1), rating=5)
 
 
+def test_no_yaml_anchors_when_created_equals_modified():
+    now = datetime(2026, 11, 18, 10, 0)
+    entry = Entry(date=date(2026, 11, 18), body="x", created=now, modified=now)
+    text = entry.to_markdown()
+    assert "&id" not in text and "*id" not in text
+    assert "date: 2026-11-18" in text
+
+
 def test_word_count():
     entry = Entry(date=date(2026, 1, 1), heading="Hallo", body="eins zwei\ndrei")
     assert entry.word_count() == 4

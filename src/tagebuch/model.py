@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 import yaml
@@ -128,9 +128,9 @@ class Entry:
         if self.time is not None:
             meta["time"] = self.time.strftime("%H:%M")
         if self.created is not None:
-            meta["created"] = self.created
+            meta["created"] = self.created + timedelta(0)
         if self.modified is not None:
-            meta["modified"] = self.modified
+            meta["modified"] = self.modified + timedelta(0)
         if self.heading:
             meta["heading"] = self.heading
         if self.rating is not None:
