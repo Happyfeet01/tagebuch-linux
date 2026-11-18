@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCP\AppFramework\Db;
 
 /**
- * Minimaler Stub der OCP-Entity für Standalone-Unit-Tests (magische get*/set* via __call).
+ * Minimaler Stub der OCP-Entity für Standalone-Unit-Tests (magische Getter/Setter via __call).
  */
 class Entity implements \JsonSerializable {
 	public function __call(string $methodName, array $args) {
