@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2
+
+- Fix: `Application::register()` rief `IRegistrationContext::registerBackgroundJob()` auf – auf NC 35 stellt der Coordinator dort ein anonymes Context-Objekt ohne diese Methode bereit („Call to undefined method …@anonymous::registerBackgroundJob()“ im Log). Jetzt per `method_exists()` guarded; die Jobs werden zusätzlich in `boot()` über `OCP\BackgroundJob\IJobList::add()` registriert (funktioniert auf NC 31–35, dedupliziert via `has()`)
+- Neuer `ApplicationTest` (3 Fälle: register() ohne registerBackgroundJob, boot() registriert beide Jobs, boot() überspringt vorhandene)
+
 ## 0.2.1
 
 - UI-Fix: Klick auf einen Tab (Timeline/Kalender/An diesem Tag/Suche/Statistik/Einstellungen) schliesst jetzt den offenen Editor
