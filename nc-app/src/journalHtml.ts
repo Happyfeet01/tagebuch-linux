@@ -1,9 +1,29 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
-import type { Entry } from './api'
+import { point } from './places'
+import type { Entry, EntryLocation } from './api'
 import { parseDiariumRows } from './diariumImport'
 import { decryptPayload } from './crypto'
 
-export interface HtmlEntry { date: string, heading: string, html: string, source: string }
+export interface HtmlEntry { date: string, heading: string, html: string, source: string, location?: EntryLocation }
+
+function appleLocation(section: ParentNode): EntryLocation | undefined {
+	const card = section.querySelector('.assetType_genericMap, .assetType_multiPinMap, .assetType_location')
+	const name = card?.querySelector('.gridItemOverlayFooter')?.textContent?.trim()
+		|| card?.querySelector('.gridItemOverlayHeader')?.textContent?.trim()
+	for (const link of (card || section).querySelectorAll('a[href]')) {
+		let url: URL
+		try { url = new URL(link.getAttribute('href') || '') } catch { continue }
+		let value: string | null = null
+		if (url.protocol === 'geo:') value = url.pathname
+		if (url.protocol === 'https:' && url.hostname === 'maps.apple.com') {
+			value = url.searchParams.get('coordinate') || url.searchParams.get('ll')
+		}
+		if (!value || !/^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(value)) continue
+		const [lat, lon] = value.split(',').map(Number)
+		if (point({ lat, lon })) return { lat, lon, name }
+	}
+	return name ? { name } : undefined
+}
 
 // Parse into an inert template; imported markup is never mounted in the page.
 export function htmlEntries(source: string, contents: string): HtmlEntry[] {
@@ -15,9 +35,11 @@ export function htmlEntries(source: string, contents: string): HtmlEntry[] {
 		throw new Error('Dies ist das Inhaltsverzeichnis von Apple Journal. Wähle den Exportordner AppleJournalEntries, seine ZIP-Datei oder eine HTML-Datei aus Entries.')
 	}
 
-	root.querySelectorAll('style, script, noscript, head, title, .assetGrid').forEach(el => el.remove())
+	root.querySelectorAll('style, script, noscript, head, title').forEach(el => el.remove())
 	const articles = [...root.querySelectorAll('article')]
 	return (articles.length ? articles : [root]).map(section => {
+		const location = appleLocation(section)
+		section.querySelectorAll('.assetGrid').forEach(el => el.remove())
 		const title = section.querySelector('.title, h1, h2')
 		const time = section.querySelector('time')
 		const stamp = time?.getAttribute('datetime') || time?.textContent || ''
@@ -31,7 +53,7 @@ export function htmlEntries(source: string, contents: string): HtmlEntry[] {
 		const body = section.querySelector('.bodyText, main') || section
 		const wrapper = document.createElement('div')
 		wrapper.append(...[...body.childNodes].map(node => node.cloneNode(true)))
-		return { date, heading, html: wrapper.innerHTML, source: filename }
+		return { date, heading, html: wrapper.innerHTML, location, source: filename }
 	})
 }
 
@@ -61,7 +83,7 @@ export async function readJournalHtml(file: File): Promise<HtmlEntry[]> {
 }
 
 export function confirmedHtml(entries: HtmlEntry[]) {
-	return parseDiariumRows(entries.map(({ date, heading, html }) => ({ date, heading, html })))
+	return parseDiariumRows(entries.map(({ date, heading, html }) => ({ date, heading, html }))).map((row, index) => ({ ...row, location: entries[index].location ?? null }))
 }
 
 const escape = (text: string) => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')

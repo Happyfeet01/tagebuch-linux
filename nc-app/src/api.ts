@@ -62,7 +62,7 @@ export const api = {
 	entries: (from?: string, to?: string) =>
 		unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/entries'), { params: { from, to } })),
 	day: (date: string) => unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/day/' + date))),
-	saveEntry: (e: Partial<Entry> & { date: string }) =>
+	saveEntry: (e: Partial<Entry> & { date: string, expectedModified?: string | null }) =>
 		unwrap<Entry>(axios.post(generateOcsUrl('/apps/tagebuch/api/entry'), e)),
 	deleteEntry: (date: string, time?: string) =>
 		unwrap<{ deleted: boolean }>(axios.delete(generateOcsUrl('/apps/tagebuch/api/entry'), { params: { date, time } })),

@@ -56,25 +56,38 @@ export function parseDiariumRows(rows: unknown[]): Entry[] {
 
 export const importKey = (entry: Entry): string => entry.date + 'T' + (entry.time || '00:00')
 
-export function availableImportTime(row: Entry, occupied: Map<string, Entry>): string | null {
+export function importSlot(row: Entry, occupied: Map<string, Entry>): { time: string | null, repair?: Entry } {
 	const original = importKey(row)
 	const minute = original.slice(0, 16)
-	const equalContent = (entry?: Entry) => entry && entry.body === row.body && entry.heading === row.heading
-		&& entry.rating === row.rating && JSON.stringify(entry.tags) === JSON.stringify(row.tags)
-		&& entry.location?.lat === row.location?.lat && entry.location?.lon === row.location?.lon
-	// Recognize entries previously imported by the minute-only importer.
-	if (original !== minute && equalContent(occupied.get(minute))) return null
+	function existingSlot(entry?: Entry) {
+		if (!entry || entry.body !== row.body || entry.heading !== row.heading || entry.rating !== row.rating
+			|| JSON.stringify(entry.tags) !== JSON.stringify(row.tags)) return
+		const old = entry.location
+		const incoming = row.location
+		if (old?.lat != null && incoming?.lat != null && (old.lat !== incoming.lat || old.lon !== incoming.lon)) return
+		const addPoint = incoming?.lat != null && incoming.lon != null && old?.lat == null && old?.lon == null
+		const addName = incoming?.name && !old?.name
+		if (!addPoint && !addName) return { time: null }
+		const location = { ...old }
+		if (addPoint) { location.lat = incoming.lat; location.lon = incoming.lon }
+		if (addName) location.name = incoming.name
+		return { time: entry.time, repair: { ...entry, location } }
+	}
+	// Older versions stored only the minute.
+	const legacy = original !== minute ? existingSlot(occupied.get(minute)) : undefined
+	if (legacy) return legacy
 	let key = original
 	let slot = row.time!
 	let offset = 0
 	const [hms, fraction = ''] = slot.split('.')
-	while (occupied.has(key) && !equalContent(occupied.get(key))) {
+	while (occupied.has(key)) {
+		const match = existingSlot(occupied.get(key))
+		if (match) return match
 		offset++
 		if (offset >= 10000000) throw new Error('Kein freier Zeitstempel in dieser Sekunde.')
 		const part = (Number(fraction.padEnd(7, '0')) + offset) % 10000000
 		slot = (hms.length === 5 ? hms + ':00' : hms) + '.' + String(part).padStart(7, '0')
 		key = row.date + 'T' + slot
 	}
-	if (occupied.has(key)) return null
-	return slot
+	return { time: slot }
 }

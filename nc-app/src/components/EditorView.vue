@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { OnlineDraft } from '../drafts'
+import TrackerFields from './TrackerFields.vue'
 import DayContext from './DayContext.vue'
 import { api, type Entry, type EntryLocation } from '../api'
 import { attachmentName, decryptFile, decryptPayload, encryptPayload, isEncryptedAttachment, isEncryptionEnabled, isUnlocked, mimeForName } from '../crypto'
@@ -15,6 +16,7 @@ const body = ref('')
 const rating = ref<number | null>(null)
 const tagsInput = ref('')
 const location = ref<EntryLocation>({})
+const trackerFields = ref<InstanceType<typeof TrackerFields>>()
 const trackers = ref<Entry['trackers']>({})
 const locating = ref(false)
 const loading = ref(true)
@@ -31,7 +33,7 @@ function locate() {
 	message.value = ''
 	navigator.geolocation.getCurrentPosition(({ coords }) => {
 		if (version !== selectionVersion) return
-		location.value = { lat: coords.latitude, lon: coords.longitude }
+		location.value = { ...location.value, lat: coords.latitude, lon: coords.longitude }
 		locating.value = false
 	}, () => {
 		if (version !== selectionVersion) return
@@ -44,21 +46,6 @@ const templates = ref<string[]>([])
 const message = ref('')
 const saving = ref(false)
 
-const trackerName = ref('')
-const trackerValue = ref('')
-function setTracker() {
-	const name = trackerName.value.trim()
-	if (!name || !trackerValue.value.trim()) return
-	const raw = trackerValue.value.trim()
-	trackers.value = { ...trackers.value, [name]: /^-?\d+(?:[.,]\d+)?$/.test(raw) ? Number(raw.replace(',', '.')) : raw }
-	trackerName.value = ''
-	trackerValue.value = ''
-}
-function removeTracker(name: string) {
-	const next = { ...trackers.value }
-	delete next[name]
-	trackers.value = next
-}
 const entryTime = ref<string | null>(null)
 const draftStatus = ref('')
 let draft: OnlineDraft | null = null
@@ -177,6 +164,7 @@ const populate = async (entry: Entry | null) => {
 }
 
 const save = async () => {
+	if (trackerFields.value && !trackerFields.value.valid()) return
 	saving.value = true
 	message.value = ''
 	try {
@@ -337,19 +325,14 @@ onMounted(async () => {
 				<input v-model="tagsInput" type="text" placeholder="Tags (kommagetrennt)" class="tags">
 				<label>Ort der Erinnerung
 					<input :value="location.name ?? ''" type="text" placeholder="z. B. Hallenbad Schlüchtern" :disabled="locating"
-						@input="location = { name: ($event.target as HTMLInputElement).value }">
+						@input="location = { ...location, name: ($event.target as HTMLInputElement).value }">
 				</label>
 				<button type="button" :disabled="locating" @click="locate">{{ locating ? 'Standort wird ermittelt …' : 'Aktuellen Standort übernehmen' }}</button>
 				<span v-if="location.lat != null && location.lon != null">{{ location.lat.toFixed(5) }}, {{ location.lon.toFixed(5) }}</span>
 				<button v-if="location.name || location.lat != null" type="button" :disabled="locating" @click="location = {}">Ort entfernen</button>
 			</div>
 
-			<div class="meta-row">
-				<label>Tracker <input v-model="trackerName" placeholder="z. B. Stimmung"></label>
-				<label>Wert <input v-model="trackerValue"></label>
-				<button type="button" @click="setTracker">Wert übernehmen</button>
-				<button v-for="(value, name) in trackers" :key="name" type="button" @click="removeTracker(String(name))">{{ name }} · {{ value }} ×</button>
-			</div>
+			<TrackerFields ref="trackerFields" :key="props.date + (selected?.id ?? 'new')" v-model="trackers" />
 			<DayContext :date="props.date" @insert="text => body += (body ? '\n' : '') + text" @attach="async file => { try { attachments.push((await api.attachment(props.date, file)).path) } catch { message = 'Foto konnte nicht angehängt werden.' } }" />
 			<div class="meta-row">
 				<label class="attach">
