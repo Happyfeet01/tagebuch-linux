@@ -13,3 +13,12 @@ test('filters a 10 km radius locally, including across the date line', () => {
 	assert.ok(withinTenKm([0, 179.98], [0, -179.99]))
 	assert.equal(withinTenKm([0, 0], [0, 0.2]), false)
 })
+
+import { buildPlaceLookup } from '../../src/nearestPlace.ts'
+import cities from 'all-the-cities'
+
+test('resolves the nearest listed town locally and leaves distant coordinates unnamed', () => {
+	const lookup = buildPlaceLookup(cities.map(({ loc, name }) => [loc.coordinates[1], loc.coordinates[0], name]))
+	assert.equal(lookup(50.424, 9.567), 'Flieden')
+	assert.equal(lookup(0, -140), '')
+})

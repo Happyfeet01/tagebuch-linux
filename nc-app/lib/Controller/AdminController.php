@@ -37,8 +37,7 @@ class AdminController extends OCSController {
 			$value = $this->config->getAppValue(Application::APP_ID, $key, '');
 			$values[$key] = $key === 'imap_password' ? ($value !== '' ? '********' : '') : $value;
 		}
-		$values['smtp_from'] = (string) $this->config->getSystemValue('mail_from_address', 'tagebuch')
-			. '@' . (string) $this->config->getSystemValue('mail_domain', 'localhost');
+		$values['smtp_from'] = $this->mailService->configuredSender() ?? '';
 		return new DataResponse($values);
 	}
 

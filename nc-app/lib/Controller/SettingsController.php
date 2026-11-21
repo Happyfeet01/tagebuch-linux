@@ -10,6 +10,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IConfig;
+use OCA\Tagebuch\Service\ReminderTime;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -23,6 +24,7 @@ class SettingsController extends OCSController {
 		string $appName,
 		IRequest $request,
 		private IConfig $config,
+		private ReminderTime $schedule,
 		private IUserSession $userSession,
 	) {
 		parent::__construct($appName, $request);
@@ -48,16 +50,21 @@ class SettingsController extends OCSController {
 			$values['theme'] = 'system';
 		}
 		$user = $this->userSession->getUser();
+		$values['reminder_zone'] = $this->schedule->zone($uid)->getName();
+		$values['reminder_sent_date'] = $this->config->getUserValue($uid, Application::APP_ID, 'reminder_sent_date', '');
 		$values['email'] = $user?->getEMailAddress() ?? '';
 		return new DataResponse($values);
 	}
 
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/api/settings')]
-	public function set(?string $reminder_enabled = null, ?string $theme = null, ?string $accent = null, ?string $font = null, ?string $photo_folder = null): DataResponse {
+	public function set(?string $reminder_enabled = null, ?string $theme = null, ?string $accent = null, ?string $font = null, ?string $photo_folder = null, ?string $reminder_timezone = null): DataResponse {
 		$uid = $this->userId();
 		$values = [];
-		foreach (['reminder_enabled' => $reminder_enabled, 'theme' => $theme, 'accent' => $accent, 'font' => $font, 'photo_folder' => $photo_folder] as $key => $value) {
+		if ($reminder_timezone !== null && !in_array($reminder_timezone, \DateTimeZone::listIdentifiers(\DateTimeZone::ALL_WITH_BC), true)) {
+			return new DataResponse(['error' => 'Ungültige Zeitzone'], 400);
+		}
+		foreach (['reminder_timezone' => $reminder_timezone, 'reminder_enabled' => $reminder_enabled, 'theme' => $theme, 'accent' => $accent, 'font' => $font, 'photo_folder' => $photo_folder] as $key => $value) {
 			if ($value !== null) {
 				$this->config->setUserValue($uid, Application::APP_ID, $key, $value);
 				$values[$key] = $value;

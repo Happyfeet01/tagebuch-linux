@@ -2,6 +2,8 @@
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { OnlineDraft } from '../drafts'
 import TrackerFields from './TrackerFields.vue'
+import { approximatePlace } from '../placeNames'
+import { point } from '../places'
 import DayContext from './DayContext.vue'
 import { api, type Entry, type EntryLocation } from '../api'
 import { attachmentName, decryptFile, decryptPayload, encryptPayload, isEncryptedAttachment, isEncryptionEnabled, isUnlocked, mimeForName } from '../crypto'
@@ -323,17 +325,17 @@ onMounted(async () => {
 					★
 				</button>
 				<input v-model="tagsInput" type="text" placeholder="Tags (kommagetrennt)" class="tags">
-				<label>Ort der Erinnerung
-					<input :value="location.name ?? ''" type="text" placeholder="z. B. Hallenbad Schlüchtern" :disabled="locating"
+				<label class="memory-place">Ort der Erinnerung
+					<input :value="location.name ?? ''" type="text" :placeholder="approximatePlace(location) || 'z. B. Hallenbad Schlüchtern'" :disabled="locating"
 						@input="location = { ...location, name: ($event.target as HTMLInputElement).value }">
 				</label>
 				<button type="button" :disabled="locating" @click="locate">{{ locating ? 'Standort wird ermittelt …' : 'Aktuellen Standort übernehmen' }}</button>
-				<span v-if="location.lat != null && location.lon != null">{{ location.lat.toFixed(5) }}, {{ location.lon.toFixed(5) }}</span>
+				<span v-if="location.lat != null && location.lon != null">{{ approximatePlace(location) ? 'Nähe ' + approximatePlace(location) + ' · ' : '' }}{{ location.lat.toFixed(5) }}, {{ location.lon.toFixed(5) }}</span>
 				<button v-if="location.name || location.lat != null" type="button" :disabled="locating" @click="location = {}">Ort entfernen</button>
 			</div>
 
 			<TrackerFields ref="trackerFields" :key="props.date + (selected?.id ?? 'new')" v-model="trackers" />
-			<DayContext :date="props.date" @insert="text => body += (body ? '\n' : '') + text" @attach="async file => { try { attachments.push((await api.attachment(props.date, file)).path) } catch { message = 'Foto konnte nicht angehängt werden.' } }" />
+			<DayContext :key="props.date + (selected?.id ?? 'new')" :date="props.date" :allow-photo-location="!point(location) && !locating" @place="coords => { if (!point(location) && !locating) location = { ...location, ...coords } }" @insert="text => body += (body ? '\n' : '') + text" @attach="async file => { try { attachments.push((await api.attachment(props.date, file)).path) } catch { message = 'Foto konnte nicht angehängt werden.' } }" />
 			<div class="meta-row">
 				<label class="attach">
 					Datei anhängen
@@ -402,7 +404,9 @@ fieldset { display: flex; flex-direction: column; gap: 10px; border: 0; padding:
 .star.active {
 	color: #e6a700;
 }
-.tags, .location {
+.memory-place { flex: 0 0 50%; min-width: min(100%, 12rem); }
+.memory-place input { display: block; width: 100%; box-sizing: border-box; }
+.tags {
 	flex: 1;
 	min-width: 140px;
 }

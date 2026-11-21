@@ -17,13 +17,15 @@ class MailService {
 	) {
 	}
 
+	public function configuredSender(): ?string {
+		$address = trim((string)$this->config->getSystemValue('mail_smtpname', ''));
+		return filter_var($address, FILTER_VALIDATE_EMAIL) !== false ? $address : null;
+	}
+
 	private function fromAddress(): string {
-		$local = (string) $this->config->getSystemValue('mail_from_address', 'tagebuch');
-		$domain = (string) $this->config->getSystemValue('mail_domain', 'localhost');
-		if (!str_contains($local, '@')) {
-			$local .= '@' . $domain;
-		}
-		return $local;
+		return $this->configuredSender() ?? throw new \RuntimeException(
+			'Für den Tagebuchversand muss mail_smtpname in der config.php eine E-Mail-Adresse sein.'
+		);
 	}
 
 	public function sendReminder(string $userId, string $email, string $date, string $token): void {
@@ -48,7 +50,9 @@ class MailService {
 		$message->setSubject($subject);
 		$message->setPlainBody($plain);
 		$message->setHtmlBody($html);
-		$this->mailer->send($message);
+		if ($this->mailer->send($message) !== []) {
+			throw new \RuntimeException('Der Mailserver hat den Empfänger abgelehnt.');
+		}
 	}
 
 	public function sendTestMail(string $email): void {
@@ -57,6 +61,8 @@ class MailService {
 		$message->setFrom([$this->fromAddress()]);
 		$message->setSubject('Tagebuch: Test-Mail über die Nextcloud-SMTP-Einstellungen');
 		$message->setPlainBody("Wenn du das liest, funktioniert der Versand über die in den Nextcloud-Systemeinstellungen konfigurierten Mailserver-Einstellungen.\n");
-		$this->mailer->send($message);
+		if ($this->mailer->send($message) !== []) {
+			throw new \RuntimeException('Der Mailserver hat den Empfänger abgelehnt.');
+		}
 	}
 }

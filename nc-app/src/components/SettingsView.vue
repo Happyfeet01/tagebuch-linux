@@ -61,11 +61,13 @@ const save = async () => {
 	try {
 		await api.saveSettings({
 			reminder_enabled: settings.value.reminder_enabled,
+			reminder_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 			theme: settings.value.theme,
 			accent: settings.value.accent,
 			font: settings.value.font,
 			photo_folder: settings.value.photo_folder,
 		})
+		settings.value = await api.settings()
 		message.value = 'Gespeichert.'
 	} catch {
 		message.value = 'Fehler beim Speichern.'
@@ -86,8 +88,9 @@ const save = async () => {
 		</p>
 		<label class="row">
 			<input v-model="settings.reminder_enabled" type="checkbox" true-value="1" false-value="0">
-			Tägliche Schreib-Erinnerung per E-Mail (täglich 20:00 Uhr)
+			Schreib-Erinnerung beim nächsten Hintergrundlauf ab 20 Uhr ({{ settings.reminder_zone }})
 		</label>
+		<p v-if="settings.reminder_enabled === '1'">Letzter erfolgreicher Versand: {{ settings.reminder_sent_date || 'bisher keiner' }}</p>
 		<label class="row">
 			Design:
 			<select v-model="settings.theme">

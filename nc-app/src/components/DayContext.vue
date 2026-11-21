@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { generateUrl } from '@nextcloud/router'
 import { api } from '../api'
 import { mimeForName } from '../crypto'
-const props = defineProps<{ date: string, preview?: boolean }>()
-const emit = defineEmits<{ insert: [string], attach: [File] }>()
+const props = defineProps<{ date: string, preview?: boolean, allowPhotoLocation?: boolean }>()
+const emit = defineEmits<{ insert: [string], attach: [File], place: [{ lat: number, lon: number }] }>()
 const calendar = ref('')
 const data = ref<Awaited<ReturnType<typeof api.dayContext>>>()
 const calendars = ref<{ id: string, name: string }[]>([])
@@ -22,10 +22,23 @@ async function load() {
 		if (id === request) { data.value = result; calendars.value = result.calendars; status.value = '' }
 	} catch { if (id === request) status.value = 'Tageskontext nicht verfügbar.' }
 }
+const readingPhoto = ref(false)
+async function usePhotoLocation(path: string) {
+	const version = request
+	readingPhoto.value = true
+	try {
+		const { location } = await api.photoLocation(path)
+		if (version !== request || !props.allowPhotoLocation) return
+		if (location) emit('place', location)
+		status.value = location ? 'Fotostandort übernommen.' : 'Keine lesbaren GPS-Daten in diesem Foto.'
+	} catch { if (version === request) status.value = 'Fotostandort konnte nicht gelesen werden.' }
+	finally { readingPhoto.value = false }
+}
 async function attach(path: string, name: string) {
 	try { emit('attach', new File([await api.photoData(path)], name, { type: mimeForName(name) })) }
 	catch { status.value = 'Foto konnte nicht geladen werden.' }
 }
+onBeforeUnmount(() => { request++ })
 watch([() => props.date, calendar, opened], load, { immediate: true })
 </script>
 <template>
@@ -50,6 +63,7 @@ watch([() => props.date, calendar, opened], load, { immediate: true })
 					<img v-if="photo.id" :src="thumbnail(photo.id)" alt="" loading="lazy" @error="($event.target as HTMLImageElement).hidden = true">
 					<figcaption>{{ photo.name }}</figcaption>
 					<button v-if="!preview" type="button" @click="attach(photo.path, photo.name)">Anhängen</button>
+					<button v-if="allowPhotoLocation && !preview" type="button" :disabled="readingPhoto" @click="usePhotoLocation(photo.path)">Fotostandort übernehmen</button>
 				</figure>
 			</div>
 		</template>

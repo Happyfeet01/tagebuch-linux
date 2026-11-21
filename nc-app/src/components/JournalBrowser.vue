@@ -2,7 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, watch, ref } from 'vue'
 import type { Entry } from '../api'
 import { decryptPayload } from '../crypto'
-import { point, locationLabel, withinTenKm } from '../places'
+import { displayPlace } from '../placeNames'
+import { point, withinTenKm } from '../places'
 import EntryList from './EntryList.vue'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -48,7 +49,7 @@ const filtered = computed(() => rows.value.filter(entry => {
 	const coords = point(entry.location)
 	if (city.value) return coords && withinTenKm(coords, [city.value.latitude, city.value.longitude])
 	const query = place.value.trim().toLocaleLowerCase()
-	return !query || [entry.heading, locationLabel(entry.location), coords?.join(', ')].some(v => v?.toLocaleLowerCase().includes(query))
+	return !query || [entry.heading, displayPlace(entry.location), coords?.join(', ')].some(v => v?.toLocaleLowerCase().includes(query))
 }))
 const mapped = computed(() => filtered.value.flatMap(entry => {
 	const coords = point(entry.location)
@@ -103,7 +104,7 @@ onBeforeUnmount(() => { request?.abort(); map?.remove() })
 	<p v-if="status" role="status">{{ status }}</p>
 	<details @toggle="event => { if ((event.target as HTMLDetailsElement).open) { showMap(); nextTick(() => map?.invalidateSize()) } }">
 		<summary>Karte mit OpenStreetMap laden ({{ mapped.length }} Einträge mit Koordinaten)</summary><div ref="mapElement" class="map"></div>
-	</details>
+	<small>Ungefähre Ortsnamen aus <a href="https://www.geonames.org/">GeoNames</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</small></details>
 	<EntryList :entries="visible" :resolved="true" details empty-text="Keine passenden Einträge." @open="emit('open', $event)" />
 	<nav v-if="dates.length > 4" aria-label="Tage durchblättern">
 		<button type="button" :disabled="page === 0" @click="page--">Neuere Tage</button>
