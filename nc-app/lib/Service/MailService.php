@@ -17,13 +17,15 @@ class MailService {
 	) {
 	}
 
+	public function configuredSender(): ?string {
+		$address = trim((string)$this->config->getSystemValue('mail_smtpname', ''));
+		return filter_var($address, FILTER_VALIDATE_EMAIL) !== false ? $address : null;
+	}
+
 	private function fromAddress(): string {
-		$local = (string) $this->config->getSystemValue('mail_from_address', 'tagebuch');
-		$domain = (string) $this->config->getSystemValue('mail_domain', 'localhost');
-		if (!str_contains($local, '@')) {
-			$local .= '@' . $domain;
-		}
-		return $local;
+		return $this->configuredSender() ?? throw new \RuntimeException(
+			'Für den Tagebuchversand muss mail_smtpname in der config.php eine E-Mail-Adresse sein.'
+		);
 	}
 
 	public function sendReminder(string $userId, string $email, string $date, string $token): void {
