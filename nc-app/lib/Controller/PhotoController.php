@@ -42,7 +42,7 @@ class PhotoController extends OCSController {
 		$events = [];
 		foreach ($this->calendars->getCalendarsForPrincipal('principals/users/' . $this->userId) as $source) {
 			$choices[] = ['id' => $source->getUri(), 'name' => $source->getDisplayName()];
-			if ($calendar === '' || $calendar !== $source->getUri()) continue;
+			if ($calendar !== '' && $calendar !== $source->getUri()) continue;
 			$options = ['types' => ['VEVENT'], 'timerange' => ['start' => $start, 'end' => $start->modify('+1 day')]];
 			foreach ($source->search('', [], $options) as $event) {
 				foreach ($event['objects'] as $object) {

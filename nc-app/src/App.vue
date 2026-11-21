@@ -7,6 +7,7 @@ import DiariumExport from './components/DiariumExport.vue'
 import EntryList from './components/EntryList.vue'
 import CalendarView from './components/CalendarView.vue'
 import OnThisDayView from './components/OnThisDayView.vue'
+import DayContext from './components/DayContext.vue'
 import EditorView from './components/EditorView.vue'
 import SearchView from './components/SearchView.vue'
 import StatsView from './components/StatsView.vue'
@@ -109,10 +110,13 @@ onMounted(async () => {
 				@closed="editorDate = null"
 			/>
 			<template v-else>
-				<form v-if="view === 'new'" class="new-entry" @submit.prevent="openDate(newDate, true)">
+				<div v-if="view === 'new'">
+				<form class="new-entry" @submit.prevent="openDate(newDate, true)">
 					<label>Datum des Eintrags <input v-model="newDate" type="date" required></label>
 					<button type="submit">Eintrag anlegen</button>
 				</form>
+				<DayContext v-if="newDate" :date="newDate" preview />
+				</div>
 				<EntryList
 					v-else-if="view === 'timeline'"
 					:entries="entries"

@@ -38,6 +38,7 @@ export interface Settings {
 }
 
 export interface Photo {
+	id?: number
 	path: string
 	name: string
 	year: string
