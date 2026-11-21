@@ -18,7 +18,7 @@ for (const rel of ['icon', 'apple-touch-icon', 'apple-touch-icon-precomposed']) 
 
 if ('serviceWorker' in navigator) {
 	window.addEventListener('load', () => {
-		navigator.serviceWorker.register(generateUrl('/apps/tagebuch/sw.js')).catch(() => {})
+		navigator.serviceWorker.register(generateUrl('/apps/tagebuch/sw.js'), { updateViaCache: 'none' }).catch(() => {})
 	})
 }
 

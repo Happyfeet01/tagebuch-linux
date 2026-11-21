@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- JavaScript und CSS tragen die App-Version im Dateinamen. Der Service Worker räumt beim Aktualisieren die bisherigen Offline-Caches des Tagebuchs auf.
+
 ## 0.2.7
 
 - Der Editor nutzt die OCS-Routen der App. Eine Nextcloud-Migration legt fehlende Tagebuchtabellen an und ergänzt bei älteren Eintragstabellen das Verschlüsselungskennzeichen.
