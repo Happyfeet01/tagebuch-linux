@@ -1,5 +1,5 @@
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { generateOcsUrl } from '@nextcloud/router'
 import { encryptFile, isEncryptionEnabled, isUnlocked } from './crypto'
 
 type Ocs<T> = { ocs: { data: T } }
@@ -55,20 +55,20 @@ export interface Stats {
 
 export const api = {
 	entries: (from?: string, to?: string) =>
-		unwrap<Entry[]>(axios.get(generateUrl('/apps/tagebuch/api/entries'), { params: { from, to } })),
-	day: (date: string) => unwrap<Entry[]>(axios.get(generateUrl('/apps/tagebuch/api/day/' + date))),
+		unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/entries'), { params: { from, to } })),
+	day: (date: string) => unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/day/' + date))),
 	saveEntry: (e: Partial<Entry> & { date: string }) =>
-		unwrap<Entry>(axios.post(generateUrl('/apps/tagebuch/api/entry'), e)),
+		unwrap<Entry>(axios.post(generateOcsUrl('/apps/tagebuch/api/entry'), e)),
 	deleteEntry: (date: string, time?: string) =>
-		unwrap<{ deleted: boolean }>(axios.delete(generateUrl('/apps/tagebuch/api/entry'), { params: { date, time } })),
+		unwrap<{ deleted: boolean }>(axios.delete(generateOcsUrl('/apps/tagebuch/api/entry'), { params: { date, time } })),
 	search: (q: string, tag?: string, since?: string, until?: string, minRating?: number) =>
-		unwrap<Entry[]>(axios.get(generateUrl('/apps/tagebuch/api/search'), { params: { q, tag, since, until, min_rating: minRating } })),
-	onThisDay: () => unwrap<Entry[]>(axios.get(generateUrl('/apps/tagebuch/api/on-this-day'))),
-	tags: () => unwrap<string[]>(axios.get(generateUrl('/apps/tagebuch/api/tags'))),
-	stats: () => unwrap<Stats>(axios.get(generateUrl('/apps/tagebuch/api/stats'))),
-	templates: () => unwrap<string[]>(axios.get(generateUrl('/apps/tagebuch/api/templates'))),
-	template: (name: string) => unwrap<{ name: string, body: string }>(axios.get(generateUrl('/apps/tagebuch/api/templates/' + encodeURIComponent(name)))),
-	saveTemplate: (name: string, body: string) => unwrap<{ name: string }>(axios.post(generateUrl('/apps/tagebuch/api/templates'), { name, body })),
+		unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/search'), { params: { q, tag, since, until, min_rating: minRating } })),
+	onThisDay: () => unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/on-this-day'))),
+	tags: () => unwrap<string[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/tags'))),
+	stats: () => unwrap<Stats>(axios.get(generateOcsUrl('/apps/tagebuch/api/stats'))),
+	templates: () => unwrap<string[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/templates'))),
+	template: (name: string) => unwrap<{ name: string, body: string }>(axios.get(generateOcsUrl('/apps/tagebuch/api/templates/' + encodeURIComponent(name)))),
+	saveTemplate: (name: string, body: string) => unwrap<{ name: string }>(axios.post(generateOcsUrl('/apps/tagebuch/api/templates'), { name, body })),
 	attachment: async (date: string, file: File) => {
 		let upload = file
 		if (isEncryptionEnabled()) {
@@ -77,18 +77,18 @@ export const api = {
 		}
 		const fd = new FormData()
 		fd.append('file', upload, upload.name)
-		return unwrap<{ path: string }>(axios.post(generateUrl(`/apps/tagebuch/api/entry/${date}/attachment`), fd))
+		return unwrap<{ path: string }>(axios.post(generateOcsUrl(`/apps/tagebuch/api/entry/${date}/attachment`), fd))
 	},
 	attachmentData: (date: string, name: string) =>
-		axios.get(generateUrl(`/apps/tagebuch/api/entry/${date}/attachment/${encodeURIComponent(name)}`), { responseType: 'arraybuffer' })
+		axios.get(generateOcsUrl(`/apps/tagebuch/api/entry/${date}/attachment/${encodeURIComponent(name)}`), { responseType: 'arraybuffer' })
 			.then((r) => r.data as ArrayBuffer),
-	onThisDayPhotos: () => unwrap<Photo[]>(axios.get(generateUrl('/apps/tagebuch/api/on-this-day/photos'))),
+	onThisDayPhotos: () => unwrap<Photo[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/on-this-day/photos'))),
 	photoData: (path: string) =>
-		axios.get(generateUrl('/apps/tagebuch/api/photo'), { params: { path }, responseType: 'arraybuffer' })
+		axios.get(generateOcsUrl('/apps/tagebuch/api/photo'), { params: { path }, responseType: 'arraybuffer' })
 			.then((r) => r.data as ArrayBuffer),
-	settings: () => unwrap<Settings>(axios.get(generateUrl('/apps/tagebuch/api/settings'))),
-	saveSettings: (s: Partial<Settings>) => unwrap<Record<string, string>>(axios.post(generateUrl('/apps/tagebuch/api/settings'), s)),
-	tokenInfo: (t: string) => unwrap<{ user: string, date: string }>(axios.get(generateUrl('/apps/tagebuch/api/token/' + t))),
+	settings: () => unwrap<Settings>(axios.get(generateOcsUrl('/apps/tagebuch/api/settings'))),
+	saveSettings: (s: Partial<Settings>) => unwrap<Record<string, string>>(axios.post(generateOcsUrl('/apps/tagebuch/api/settings'), s)),
+	tokenInfo: (t: string) => unwrap<{ user: string, date: string }>(axios.get(generateOcsUrl('/apps/tagebuch/api/token/' + t))),
 }
 
 export const stars = (rating: number | null): string => (rating === null ? '' : '★'.repeat(rating) + '☆'.repeat(5 - rating))

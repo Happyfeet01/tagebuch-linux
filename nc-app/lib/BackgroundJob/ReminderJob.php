@@ -10,7 +10,7 @@ use OCA\Tagebuch\Service\TokenService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IConfig;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 use OCP\IUser;
 use OCP\IUserManager;
 
@@ -23,7 +23,7 @@ class ReminderJob extends TimedJob {
 		private IUserManager $userManager,
 		private MailService $mailService,
 		private TokenService $tokens,
-		private ILogger $logger,
+		private LoggerInterface $logger,
 	) {
 		parent::__construct($time);
 		$this->setTimeSensitivity(self::TIME_SENSITIVE);

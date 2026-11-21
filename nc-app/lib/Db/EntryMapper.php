@@ -107,7 +107,7 @@ class EntryMapper extends QBMapper {
 		$q = mb_strtolower(trim($query));
 		return array_values(array_filter($entries, static function (Entry $e) use ($q, $tag, $minRating): bool {
 			if ($tag !== null && $tag !== '') {
-				$tags = json_decode($e->getTags(), true) ?: [];
+				$tags = json_decode($e->getTags() ?? '[]', true) ?: [];
 				if (!in_array(mb_strtolower($tag), array_map('mb_strtolower', $tags), true)) {
 					return false;
 				}
@@ -123,7 +123,7 @@ class EntryMapper extends QBMapper {
 					$locationName = is_array($decoded) ? (string) ($decoded['name'] ?? '') : '';
 				}
 				$haystack = mb_strtolower(
-					$e->getHeading() . "\n" . $e->getBody() . "\n" . implode(' ', json_decode($e->getTags(), true) ?: [])
+					$e->getHeading() . "\n" . $e->getBody() . "\n" . implode(' ', json_decode($e->getTags() ?? '[]', true) ?: [])
 					. "\n" . $e->getTrackers() . "\n" . $locationName
 				);
 				if (!str_contains($haystack, $q)) {

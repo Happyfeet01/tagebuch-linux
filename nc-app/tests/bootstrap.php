@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+$loader = require __DIR__ . '/../vendor/autoload.php';
 
 $stubs = [
 	\OCP\IConfig::class => __DIR__ . '/stubs/OCP/IConfig.php',
@@ -15,6 +15,9 @@ $stubs = [
 	\OCP\Files\Folder::class => __DIR__ . '/stubs/OCP/Files/Folder.php',
 	\OCP\Files\IRootFolder::class => __DIR__ . '/stubs/OCP/Files/IRootFolder.php',
 	\OCP\AppFramework\App::class => __DIR__ . '/stubs/OCP/AppFramework/App.php',
+	\OCP\AppFramework\Http::class => __DIR__ . '/stubs/OCP/AppFramework/Http.php',
+	\OCP\AppFramework\Http\Response::class => __DIR__ . '/stubs/OCP/AppFramework/Http/Response.php',
+	\OCP\AppFramework\Http\StreamResponse::class => __DIR__ . '/stubs/OCP/AppFramework/Http/StreamResponse.php',
 	\OCP\AppFramework\Bootstrap\IBootstrap::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IBootstrap.php',
 	\OCP\AppFramework\Bootstrap\IRegistrationContext::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IRegistrationContext.php',
 	\OCP\AppFramework\Bootstrap\IBootContext::class => __DIR__ . '/stubs/OCP/AppFramework/Bootstrap/IBootContext.php',
@@ -26,3 +29,6 @@ foreach ($stubs as $class => $file) {
 		require_once $file;
 	}
 }
+
+// Load framework contracts not covered by the off-server test doubles.
+$loader->addPsr4('OCP\\', __DIR__ . '/../vendor/nextcloud/ocp/OCP');

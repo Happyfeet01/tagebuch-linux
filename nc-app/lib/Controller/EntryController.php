@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\Tagebuch\Controller;
 
+use OCA\Tagebuch\Http\ContentResponse;
 use OCA\Tagebuch\Service\EntryService;
 use OCA\Tagebuch\Service\TokenService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
-use OCP\AppFramework\Http\DownloadResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -153,7 +153,7 @@ class EntryController extends OCSController {
 		try {
 			$a = $this->entryService->getAttachment($date, $name);
 			$display = str_ends_with($name, '.enc') ? substr($name, 0, -4) : $name;
-			return new DownloadResponse($a['content'], $display, $a['mime']);
+			return ContentResponse::stream($a['content'], $a['mime'], $display);
 		} catch (\InvalidArgumentException $e) {
 			return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
 		}
