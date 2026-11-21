@@ -86,8 +86,8 @@ export const api = {
 		axios.get(generateOcsUrl(`/apps/tagebuch/api/entry/${date}/attachment/${encodeURIComponent(name)}`), { responseType: 'arraybuffer' })
 			.then((r) => r.data as ArrayBuffer),
 	onThisDayPhotos: () => unwrap<Photo[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/on-this-day/photos'))),
-	photoData: (path: string) =>
-		axios.get(generateOcsUrl('/apps/tagebuch/api/photo'), { params: { path }, responseType: 'arraybuffer' })
+	photoData: (path: string, signal?: AbortSignal) =>
+		axios.get(generateOcsUrl('/apps/tagebuch/api/photo'), { params: { path }, signal, responseType: 'arraybuffer' })
 			.then((r) => r.data as ArrayBuffer),
 	settings: () => unwrap<Settings>(axios.get(generateOcsUrl('/apps/tagebuch/api/settings'))),
 	saveSettings: (s: Partial<Settings>) => unwrap<Record<string, string>>(axios.post(generateOcsUrl('/apps/tagebuch/api/settings'), s)),

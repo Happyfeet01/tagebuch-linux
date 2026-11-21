@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.6
+
+- Unter „+ Neu“ kann vor dem Schreiben das Datum gewählt werden, auch wenn für den Tag bereits Einträge bestehen.
+
+- „An diesem Tag“ gruppiert Medien nach Jahr und zählt Bilder und Videos getrennt. Aufnahmen werden beim Öffnen des Jahres seitenweise geladen.
+
 ## 0.3.5
 
 - Der Diarium-Import prüft das Dateiformat nach der Auswahl, damit der iPhone-Dateidialog Sicherungen mit der Endung .diary auswählen lässt.

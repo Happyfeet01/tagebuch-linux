@@ -120,7 +120,7 @@ class PhotoService {
 				}
 				if ($file instanceof File && self::isMedia($file->getName())) {
 					$photos[] = ['path' => $sourcePath . '/' . $file->getName(), 'name' => $file->getName(), 'year' => $yearDir];
-					if (count($photos) >= self::MAX_PHOTOS) {
+					if ($sameDay && count($photos) >= self::MAX_PHOTOS) {
 						break 2;
 					}
 				}

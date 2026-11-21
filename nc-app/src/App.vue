@@ -12,7 +12,7 @@ import SearchView from './components/SearchView.vue'
 import StatsView from './components/StatsView.vue'
 import SettingsView from './components/SettingsView.vue'
 
-type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings' | 'browse' | 'export'
+type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings' | 'browse' | 'export' | 'new'
 
 const editor = ref<InstanceType<typeof EditorView>>()
 const ready = ref(false)
@@ -27,6 +27,15 @@ const editorDate = ref<string | null>(null)
 const todayIso = (): string => {
 	const t = new Date()
 	return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
+}
+
+const newDate = ref(todayIso())
+
+const chooseDate = async () => {
+	if (editor.value && !await editor.value.flushDraft()) return
+	newDate.value = todayIso()
+	editorDate.value = null
+	view.value = 'new'
 }
 
 const reload = async () => {
@@ -86,7 +95,7 @@ onMounted(async () => {
 			<button type="button" :class="{ active: view === 'settings' && editorDate === null }" @click="showView('settings')">Einstellungen</button>
 			<button type="button" @click="showView('browse')">Orte &amp; Anhänge</button>
 			<button type="button" @click="showView('export')">Diarium-Export</button>
-			<button type="button" class="new" @click="openDate(todayIso(), true)">+ Neu</button>
+			<button type="button" class="new" @click="chooseDate">+ Neu</button>
 		</nav>
 
 		<main v-if="ready">
@@ -100,8 +109,12 @@ onMounted(async () => {
 				@closed="editorDate = null"
 			/>
 			<template v-else>
+				<form v-if="view === 'new'" class="new-entry" @submit.prevent="openDate(newDate, true)">
+					<label>Datum des Eintrags <input v-model="newDate" type="date" required></label>
+					<button type="submit">Eintrag anlegen</button>
+				</form>
 				<EntryList
-					v-if="view === 'timeline'"
+					v-else-if="view === 'timeline'"
 					:entries="entries"
 					empty-text="Noch keine Einträge – leg oben mit „+ Neu“ los."
 					@open="openEntry"
@@ -144,6 +157,7 @@ onMounted(async () => {
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
 }
+.new-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .tabs {
 	display: flex;
 	flex-wrap: wrap;
