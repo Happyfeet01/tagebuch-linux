@@ -15,7 +15,7 @@ const decryptEntry = async (entry: Entry): Promise<Entry> => {
 	if (entry.encrypted !== 1 || !isEncryptionEnabled() || !isUnlocked()) return entry
 	const payload = await decryptPayload(entry.body)
 	if (!payload) return entry
-	return { ...entry, heading: payload.heading, body: payload.body, tags: payload.tags, location: payload.location }
+	return { ...entry, encrypted: 0, heading: payload.heading, body: payload.body, tags: payload.tags, location: payload.location }
 }
 
 const run = async () => {

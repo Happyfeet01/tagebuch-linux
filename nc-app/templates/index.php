@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use OCP\Util;
 
-Util::addScript(\OCA\Tagebuch\AppInfo\Application::APP_ID, 'tagebuch-main');
-Util::addStyle(\OCA\Tagebuch\AppInfo\Application::APP_ID, 'tagebuch-main');
+$version = (string)simplexml_load_file(__DIR__ . '/../appinfo/info.xml')->version;
+$entry = 'tagebuch-main-' . str_replace('.', '-', $version);
+
+Util::addScript(\OCA\Tagebuch\AppInfo\Application::APP_ID, $entry);
+Util::addStyle(\OCA\Tagebuch\AppInfo\Application::APP_ID, $entry);
 
 $token = $_['token'] ?? '';
 ?>

@@ -5,14 +5,17 @@ const csvField = (value: string | number | null | undefined): string =>
 	'"' + String(value ?? '').replaceAll('"', '""') + '"'
 
 export async function diariumCsv(entries: Entry[]): Promise<string> {
+	const exportedTimes = new Set<string>()
 	const rows = ['date,text,title,rating,tags,latitude,longitude']
 	for (const entry of entries) {
 		const content = entry.encrypted ? await decryptPayload(entry.body) : entry
 		if (!content) {
 			throw new Error('Ein Eintrag konnte nicht entschlüsselt werden. Bitte entsperre den Tresor in den Einstellungen.')
 		}
-		const time = entry.time?.length === 5 ? entry.time + ':00' : entry.time
+		const time = entry.time?.length === 5 ? entry.time + ':00' : entry.time?.split('.')[0]
 		const date = time ? entry.date + 'T' + time : entry.date
+		if (exportedTimes.has(date)) throw new Error('Diariums CSV ist sekundengenau. Bitte exportiere Einträge mit gleicher Sekunde einzeln und passe deren Uhrzeit in Diarium an.')
+		exportedTimes.add(date)
 		if (content.tags.some(tag => tag.includes('|'))) {
 			throw new Error('Ein Tag vom ' + entry.date + ' enthält „|“. Diarium verwendet dieses Zeichen zum Trennen von Tags. Bitte passe den Tag vor dem Export an.')
 		}

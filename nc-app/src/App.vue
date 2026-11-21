@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { api, type Entry } from './api'
+import { initializeVault } from './crypto'
+import JournalBrowser from './components/JournalBrowser.vue'
 import DiariumExport from './components/DiariumExport.vue'
 import EntryList from './components/EntryList.vue'
 import CalendarView from './components/CalendarView.vue'
@@ -10,11 +12,15 @@ import SearchView from './components/SearchView.vue'
 import StatsView from './components/StatsView.vue'
 import SettingsView from './components/SettingsView.vue'
 
-type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings' | 'export'
+type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings' | 'browse' | 'export'
 
+const editor = ref<InstanceType<typeof EditorView>>()
+const ready = ref(false)
+const startupError = ref('')
 const view = ref<View>('timeline')
 const entries = ref<Entry[]>([])
 const onThisDayEntries = ref<Entry[]>([])
+const fresh = ref(false)
 const editorId = ref<number>()
 const editorDate = ref<string | null>(null)
 
@@ -29,22 +35,33 @@ const reload = async () => {
 }
 
 const openEntry = (entry: Entry) => {
+	fresh.value = false
 	editorId.value = entry.id
 	editorDate.value = entry.date
 }
 
-const openDate = (date: string) => {
+const openDate = async (date: string, newEntry = false) => {
+	if (editor.value && !await editor.value.flushDraft()) return
+	fresh.value = newEntry
 	editorId.value = undefined
 	editorDate.value = date
 }
 
-const showView = (v: View) => {
+const showView = async (v: View) => {
+	if (editor.value && !await editor.value.flushDraft()) return
 	view.value = v
 	editorDate.value = null
 }
 
 onMounted(async () => {
-	await reload()
+	try {
+		await reload()
+		await initializeVault(entries.value.find(entry => entry.encrypted)?.body)
+		ready.value = true
+	} catch {
+		startupError.value = 'Tagebuch konnte nicht geladen werden. Prüfe die Verbindung und lade die Seite neu.'
+		return
+	}
 	const token = document.getElementById('tagebuch')?.dataset.token ?? ''
 	if (token !== '') {
 		try {
@@ -59,21 +76,24 @@ onMounted(async () => {
 
 <template>
 	<div class="tagebuch-app">
-		<nav class="tabs">
+		<p v-if="!ready" role="status">{{ startupError || 'Tagebuch wird geladen …' }}</p>
+		<nav v-if="ready" class="tabs">
 			<button type="button" :class="{ active: view === 'timeline' && editorDate === null }" @click="showView('timeline')">Timeline</button>
 			<button type="button" :class="{ active: view === 'calendar' && editorDate === null }" @click="showView('calendar')">Kalender</button>
 			<button type="button" :class="{ active: view === 'onthisday' && editorDate === null }" @click="showView('onthisday')">An diesem Tag</button>
 			<button type="button" :class="{ active: view === 'search' && editorDate === null }" @click="showView('search')">Suche</button>
 			<button type="button" :class="{ active: view === 'stats' && editorDate === null }" @click="showView('stats')">Statistik</button>
 			<button type="button" :class="{ active: view === 'settings' && editorDate === null }" @click="showView('settings')">Einstellungen</button>
-			<button type="button" :class="{ active: view === 'export' && editorDate === null }" @click="showView('export')">Diarium-Export</button>
-			<button type="button" class="new" @click="openDate(todayIso())">+ Neu</button>
+			<button type="button" @click="showView('browse')">Orte &amp; Anhänge</button>
+			<button type="button" @click="showView('export')">Diarium-Export</button>
+			<button type="button" class="new" @click="openDate(todayIso(), true)">+ Neu</button>
 		</nav>
 
-		<main>
-			<EditorView
+		<main v-if="ready">
+			<EditorView ref="editor"
 				v-if="editorDate !== null"
-				:key="editorDate + (editorId ?? '')"
+				:key="editorDate + (editorId ?? '') + fresh"
+				:fresh="fresh"
 				:entry-id="editorId"
 				:date="editorDate"
 				@saved="reload"
@@ -92,10 +112,11 @@ onMounted(async () => {
 					:entries="onThisDayEntries"
 					@open="openEntry"
 				/>
+				<JournalBrowser v-else-if="view === 'browse'" :entries="entries" @open="openEntry" />
+				<DiariumExport v-else-if="view === 'export'" :entries="entries" />
 				<SearchView v-else-if="view === 'search'" @open="openEntry" />
 				<StatsView v-else-if="view === 'stats'" />
-				<DiariumExport v-else-if="view === 'export'" :entries="entries" />
-				<SettingsView v-else-if="view === 'settings'" />
+				<SettingsView v-else-if="view === 'settings'" @imported="reload" />
 			</template>
 		</main>
 	</div>

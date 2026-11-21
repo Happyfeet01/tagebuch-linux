@@ -22,8 +22,35 @@ class PhotoController extends OCSController {
 		string $appName,
 		IRequest $request,
 		private PhotoService $photos,
+		private \OCP\Calendar\IManager $calendars,
+		private string $userId,
 	) {
 		parent::__construct($appName, $request);
+	}
+
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/api/day-context')]
+	public function dayContext(string $date, string $calendar = '', string $timezone = 'UTC'): DataResponse {
+		try {
+			$zone = new \DateTimeZone($timezone);
+			$start = \DateTimeImmutable::createFromFormat('!Y-m-d', $date, $zone);
+		} catch (\Exception $e) {
+			return new DataResponse([], 400);
+		}
+		if (!$start || $start->format('Y-m-d') !== $date) return new DataResponse([], 400);
+		$choices = [];
+		$events = [];
+		foreach ($this->calendars->getCalendarsForPrincipal('principals/users/' . $this->userId) as $source) {
+			$choices[] = ['id' => $source->getUri(), 'name' => $source->getDisplayName()];
+			if ($calendar === '' || $calendar !== $source->getUri()) continue;
+			$options = ['types' => ['VEVENT'], 'timerange' => ['start' => $start, 'end' => $start->modify('+1 day')]];
+			foreach ($source->search('', [], $options) as $event) {
+				foreach ($event['objects'] as $object) {
+					if (isset($object['SUMMARY'][0])) $events[] = (string)$object['SUMMARY'][0];
+				}
+			}
+		}
+		return new DataResponse(['calendars' => $choices, 'events' => $events, 'photos' => $this->photos->photosForDay($date, true)]);
 	}
 
 	#[NoAdminRequired]

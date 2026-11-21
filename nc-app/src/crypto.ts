@@ -1,6 +1,7 @@
+import { readState, writeState } from './state'
+
 const SALT_KEY = 'tagebuch.enc.salt'
 const VERIFIER_KEY = 'tagebuch.enc.verifier'
-const ENABLED_KEY = 'tagebuch.enc.enabled'
 const VERIFIER_PLAIN = 'tagebuch-verifier'
 
 let sessionKey: CryptoKey | null = null
@@ -54,35 +55,64 @@ const decryptWithKey = async (key: CryptoKey, payload: string): Promise<string> 
 	return new TextDecoder().decode(pt)
 }
 
-export const isEncryptionEnabled = (): boolean => localStorage.getItem(ENABLED_KEY) === '1'
+interface VaultProfile { salt: string, verifier: string }
+let profile: VaultProfile | null = null
+let legacy = false
+let needsOriginal = false
 
-export const hasEncryptionSetup = (): boolean => localStorage.getItem(SALT_KEY) !== null
+export async function initializeVault(encryptedSample?: string) {
+	const state = await readState('vault')
+	profile = state.payload ? JSON.parse(state.payload) : null
+	const salt = localStorage.getItem(SALT_KEY)
+	const verifier = localStorage.getItem(VERIFIER_KEY)
+	legacy = !profile && !!salt && !!verifier && !!encryptedSample
+	if (legacy) profile = { salt: salt!, verifier: verifier! }
+	needsOriginal = !profile && !!encryptedSample
+	sample = legacy ? encryptedSample : undefined
+}
+let sample: string | undefined
 
+export const isEncryptionEnabled = (): boolean => !!profile || needsOriginal
+export const hasEncryptionSetup = isEncryptionEnabled
 export const isUnlocked = (): boolean => sessionKey !== null
 
 export const setupEncryption = async (password: string): Promise<void> => {
+	if (isEncryptionEnabled()) throw new Error('Es ist bereits ein Tresor vorhanden.')
 	const salt = crypto.getRandomValues(new Uint8Array(16))
 	const key = await deriveKey(password, salt)
-	const verifier = await encryptWithKey(key, VERIFIER_PLAIN)
-	localStorage.setItem(SALT_KEY, b64encode(salt))
-	localStorage.setItem(VERIFIER_KEY, verifier)
-	localStorage.setItem(ENABLED_KEY, '1')
+	const next = { salt: b64encode(salt), verifier: await encryptWithKey(key, VERIFIER_PLAIN) }
+	await writeState('vault', '', JSON.stringify(next))
+	profile = next
 	sessionKey = key
 }
 
 export const unlockEncryption = async (password: string): Promise<boolean> => {
-	const saltB64 = localStorage.getItem(SALT_KEY)
-	if (!saltB64) return false
-	const key = await deriveKey(password, b64decode(saltB64))
+	if (!profile) throw new Error('Öffne den ursprünglichen Browser und entsperre dort einmal den Tresor. Lade danach diese Seite neu.')
+	const key = await deriveKey(password, b64decode(profile.salt))
 	try {
-		const verifier = localStorage.getItem(VERIFIER_KEY) ?? ''
-		const plain = await decryptWithKey(key, verifier)
-		if (plain !== VERIFIER_PLAIN) return false
-	} catch {
-		return false
+		if (await decryptWithKey(key, profile.verifier) !== VERIFIER_PLAIN) return false
+		if (sample) await decryptWithKey(key, sample)
+	} catch { return false }
+	if (legacy) {
+		await writeState('vault', '', JSON.stringify(profile))
+		legacy = false
+		sample = undefined
 	}
 	sessionKey = key
 	return true
+}
+
+export async function protectDraft(value: string): Promise<string> {
+	if (!isEncryptionEnabled()) return JSON.stringify({ value })
+	if (!sessionKey) throw new Error('Tresor gesperrt.')
+	return JSON.stringify({ cipher: await encryptWithKey(sessionKey, value) })
+}
+
+export async function openDraft(raw: string): Promise<string> {
+	const record = JSON.parse(raw)
+	if (typeof record.value === 'string') return record.value
+	if (!sessionKey) throw new Error('Entwurf verschlüsselt. Bitte zuerst den Tresor entsperren.')
+	return decryptWithKey(sessionKey, record.cipher)
 }
 
 export const lockEncryption = (): void => {
