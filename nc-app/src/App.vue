@@ -92,7 +92,7 @@ onMounted(async () => {
 				/>
 				<SearchView v-else-if="view === 'search'" @open="openEntry" />
 				<StatsView v-else-if="view === 'stats'" />
-				<SettingsView v-else-if="view === 'settings'" />
+				<SettingsView v-else-if="view === 'settings'" @imported="reload" />
 			</template>
 		</main>
 	</div>

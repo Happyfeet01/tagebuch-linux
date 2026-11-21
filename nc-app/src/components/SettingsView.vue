@@ -2,7 +2,9 @@
 import { onMounted, ref } from 'vue'
 import { api, type Settings } from '../api'
 import { hasEncryptionSetup, isEncryptionEnabled, isUnlocked, lockEncryption, setupEncryption, unlockEncryption } from '../crypto'
+import DiariumImport from './DiariumImport.vue'
 
+const emit = defineEmits<{ imported: [] }>()
 const settings = ref<Settings | null>(null)
 const message = ref('')
 const encPassword = ref('')
@@ -99,6 +101,8 @@ const save = async () => {
 		</p>
 		<button type="button" @click="save">Speichern</button>
 		<p v-if="message" class="message">{{ message }}</p>
+
+		<DiariumImport @imported="emit('imported')" />
 
 		<h3>Verschlüsselung (clientseitig, AES-GCM)</h3>
 		<p v-if="encState === 'setup'">
