@@ -78,7 +78,7 @@ class EntryService {
 				$entry['created'] = $existing->getCreatedAt();
 			}
 		}
-		$now = (new \DateTimeImmutable('now'))->format('Y-m-d\TH:i:sP');
+		$now = (new \DateTimeImmutable('now'))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.u\Z');
 		if (empty($entry['created'])) {
 			$entry['created'] = $now;
 		}

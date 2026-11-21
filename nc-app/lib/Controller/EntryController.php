@@ -24,6 +24,8 @@ class EntryController extends OCSController {
 		IRequest $request,
 		private EntryService $entryService,
 		private TokenService $tokens,
+		private \OCP\IDBConnection $db,
+		private string $userId,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -74,8 +76,31 @@ class EntryController extends OCSController {
 		?array $location = null,
 		?array $attachments = null,
 		?int $encrypted = null,
+		?string $expectedModified = null,
 	): DataResponse {
+		$this->db->beginTransaction();
 		try {
+			if (!$encrypted) {
+				$q = $this->db->getQueryBuilder();
+				$q->select('revision')->from('tagebuch_state')
+					->where($q->expr()->eq('user_id', $q->createNamedParameter($this->userId)))
+					->andWhere($q->expr()->eq('state_key', $q->createNamedParameter('vault')));
+				if ($q->executeQuery()->fetchOne() !== false) {
+					$this->db->rollBack();
+					return new DataResponse(['error' => 'Tresor aktiv. Bitte neu laden und entsperren.'], 409);
+				}
+			}
+			if ($id !== null && $expectedModified !== null) {
+				$q = $this->db->getQueryBuilder();
+				$q->update('tagebuch_entries')->set('modified_at', $q->createNamedParameter(bin2hex(random_bytes(12))))
+					->where($q->expr()->eq('id', $q->createNamedParameter($id)))
+					->andWhere($q->expr()->eq('user_id', $q->createNamedParameter($this->userId)))
+					->andWhere($q->expr()->eq('modified_at', $q->createNamedParameter($expectedModified)));
+				if (!$q->executeStatement()) {
+					$this->db->rollBack();
+					return new DataResponse(['error' => 'Eintrag wurde inzwischen geändert.'], 409);
+				}
+			}
 			$entry = $this->entryService->saveEntry([
 				'id' => $id,
 				'date' => $date,
@@ -89,9 +114,14 @@ class EntryController extends OCSController {
 				'attachments' => $attachments ?? [],
 				'encrypted' => $encrypted ?? 0,
 			]);
+			$this->db->commit();
 			return new DataResponse($entry);
 		} catch (\InvalidArgumentException $e) {
+			$this->db->rollBack();
 			return new DataResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
 		}
 	}
 

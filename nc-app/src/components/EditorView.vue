@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { OnlineDraft } from '../drafts'
+import DayContext from './DayContext.vue'
 import { api, type Entry, type EntryLocation } from '../api'
 import { attachmentName, decryptFile, decryptPayload, encryptPayload, isEncryptedAttachment, isEncryptionEnabled, isUnlocked, mimeForName } from '../crypto'
 
-const props = defineProps<{ date: string, entryId?: number }>()
+const props = defineProps<{ date: string, entryId?: number, fresh?: boolean }>()
 const emit = defineEmits<{ saved: [], closed: [] }>()
 
 const entries = ref<Entry[]>([])
@@ -42,18 +44,96 @@ const templates = ref<string[]>([])
 const message = ref('')
 const saving = ref(false)
 
+const trackerName = ref('')
+const trackerValue = ref('')
+function setTracker() {
+	const name = trackerName.value.trim()
+	if (!name || !trackerValue.value.trim()) return
+	const raw = trackerValue.value.trim()
+	trackers.value = { ...trackers.value, [name]: /^-?\d+(?:[.,]\d+)?$/.test(raw) ? Number(raw.replace(',', '.')) : raw }
+	trackerName.value = ''
+	trackerValue.value = ''
+}
+function removeTracker(name: string) {
+	const next = { ...trackers.value }
+	delete next[name]
+	trackers.value = next
+}
+const entryTime = ref<string | null>(null)
+const draftStatus = ref('')
+let draft: OnlineDraft | null = null
+let draftReady = false
+let baseModified: string | null = null
+
+async function flushDraft() {
+	try { await draft?.flush(); return true } catch { return false }
+}
+defineExpose({ flushDraft: async () => !saving.value && await flushDraft() })
+function beforeUnload(event: BeforeUnloadEvent) {
+	if (draft?.dirty || saving.value) { event.preventDefault(); event.returnValue = '' }
+}
+onMounted(() => window.addEventListener('beforeunload', beforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
+
+function snapshot() {
+	return { heading: heading.value, body: body.value, rating: rating.value, tags: tagsInput.value,
+		location: location.value, trackers: trackers.value, attachments: attachments.value,
+		time: entryTime.value, baseModified }
+}
+watch(snapshot, () => {
+	if (draftReady && !unreadable.value) draft?.schedule(JSON.stringify(snapshot()))
+}, { deep: true, flush: 'sync' })
+onBeforeUnmount(() => { void flushDraft() })
+
 const load = async () => {
 	loading.value = true
 	try {
 		entries.value = await api.day(props.date)
-		await pick(entries.value.find(entry => entry.id === props.entryId) ?? entries.value[0] ?? null)
+		await pick(props.fresh ? null : entries.value.find(entry => entry.id === props.entryId) ?? entries.value[0] ?? null)
 		loading.value = false
 	} catch {
 		message.value = 'Einträge konnten nicht geladen werden. Bitte öffne den Tag erneut.'
 	}
 }
 
-const pick = async (entry: Entry | null) => {
+async function pick(entry: Entry | null) {
+	if (!await flushDraft()) return
+	draftReady = false
+	draftStatus.value = ''
+	message.value = ''
+	loading.value = true
+	const key = 'draft-' + props.date + '-' + (entry?.id ?? 'new')
+	const next = new OnlineDraft(key, text => { if (draft === next) draftStatus.value = text })
+	draft = next
+	try {
+		await populate(entry)
+		baseModified = entry?.modified ?? null
+		const now = new Date()
+		while (!entry && entries.value.some(e => e.time === now.toTimeString().slice(0, 8))) now.setSeconds(now.getSeconds() + 1)
+		entryTime.value = entry ? entry.time : now.toTimeString().slice(0, 8)
+		if (!unreadable.value) {
+			const saved = await next.load()
+			if (saved) {
+				heading.value = saved.heading
+				body.value = saved.body
+				rating.value = saved.rating
+				tagsInput.value = saved.tags
+				location.value = saved.location
+				trackers.value = saved.trackers
+				attachments.value = saved.attachments
+				entryTime.value = saved.time
+				baseModified = saved.baseModified
+				draftStatus.value = 'Online-Entwurf wiederhergestellt.'
+			}
+			draftReady = true
+		}
+	} catch {
+		unreadable.value = true
+		message.value = 'Entwurf nicht lesbar. Prüfe Verbindung und Tresor.'
+	} finally { loading.value = false }
+}
+
+const populate = async (entry: Entry | null) => {
 	const version = ++selectionVersion
 	locating.value = false
 	unreadable.value = false
@@ -110,7 +190,8 @@ const save = async () => {
 		let payload: Record<string, unknown> = {
 			id: selected.value?.id ?? null,
 			date: props.date,
-			time: selected.value?.time ?? null,
+			time: entryTime.value,
+			expectedModified: baseModified,
 			heading: heading.value,
 			body: body.value,
 			rating: rating.value,
@@ -130,13 +211,19 @@ const save = async () => {
 			})
 			payload = { ...payload, heading: '', body: cipher, tags: [], trackers: {}, location: null, encrypted: 1 }
 		}
+		if (!await flushDraft()) return
 		const saved = await api.saveEntry(payload as Partial<Entry> & { date: string })
 		entries.value = [...entries.value.filter(entry => entry.id !== saved.id), saved]
+		draftReady = false
 		selected.value = saved
-		message.value = 'Gespeichert.'
+		baseModified = saved.modified ?? null
 		emit('saved')
-	} catch {
-		message.value = 'Speichern fehlgeschlagen. Dein Entwurf bleibt hier geöffnet.'
+		await draft?.clear()
+		await pick(saved)
+		message.value = 'Gespeichert.'
+	} catch (error) {
+		const http = error as { response?: { status?: number, data?: { ocs?: { data?: { error?: string } } } } }
+		message.value = http.response?.data?.ocs?.data?.error ?? 'Speichern fehlgeschlagen. Dein Entwurf bleibt hier geöffnet.'
 	} finally {
 		saving.value = false
 	}
@@ -144,8 +231,9 @@ const save = async () => {
 
 const remove = async () => {
 	if (!selected.value) return
-	if (!window.confirm('Eintrag wirklich löschen?')) return
+	if (!window.confirm('Eintrag wirklich löschen?') || !await flushDraft()) return
 	await api.deleteEntry(selected.value.date, selected.value.time ?? undefined)
+	await draft?.clear()
 	emit('saved')
 	await load()
 }
@@ -213,19 +301,23 @@ onMounted(async () => {
 			<h2>{{ props.date }}</h2>
 			<div>
 				<button type="button" :disabled="saving || loading || locating || unreadable" @click="save">Speichern</button>
-				<button v-if="selected" type="button" class="danger" @click="remove">Löschen</button>
-				<button type="button" @click="emit('closed')">Zurück</button>
+				<button v-if="selected" :disabled="saving || loading" type="button" class="danger" @click="remove">Löschen</button>
+				<button type="button" :disabled="saving || loading" @click="async () => { if (await flushDraft()) emit('closed') }">Zurück</button>
 			</div>
 		</div>
+		<p v-if="draftStatus" role="status">{{ draftStatus }}</p>
+		<button v-if="selected" type="button" :disabled="saving || loading" @click="pick(null)">Weiteren Eintrag für diesen Tag</button>
 		<p v-if="message" class="message">{{ message }}</p>
 
-		<select v-if="entries.length > 1" :disabled="saving || loading" :value="selected?.id ?? ''" @change="pick(entries.find((e) => e.id === Number(($event.target as HTMLSelectElement).value)) ?? null)">
+		<select v-if="entries.length > 1 || (!selected && entries.length)" :disabled="saving || loading" :value="selected?.id ?? ''" @change="pick(entries.find((e) => e.id === Number(($event.target as HTMLSelectElement).value)) ?? null)">
+			<option v-if="!selected" value="">Neuer Eintrag</option>
 			<option v-for="e in entries" :key="e.id" :value="e.id">
 				{{ e.time ?? 'Haupteintrag' }} – {{ e.heading || '(ohne Überschrift)' }}
 			</option>
 		</select>
 
 		<fieldset :disabled="saving || loading || unreadable">
+			<label v-if="!selected">Uhrzeit <input v-model="entryTime" type="time" step="1"></label>
 			<input v-model="heading" type="text" placeholder="Überschrift (optional)" class="heading">
 
 			<textarea v-model="body" rows="14" placeholder="Markdown-Text …" class="body" />
@@ -252,6 +344,13 @@ onMounted(async () => {
 				<button v-if="location.name || location.lat != null" type="button" :disabled="locating" @click="location = {}">Ort entfernen</button>
 			</div>
 
+			<div class="meta-row">
+				<label>Tracker <input v-model="trackerName" placeholder="z. B. Stimmung"></label>
+				<label>Wert <input v-model="trackerValue"></label>
+				<button type="button" @click="setTracker">Wert übernehmen</button>
+				<button v-for="(value, name) in trackers" :key="name" type="button" @click="removeTracker(String(name))">{{ name }} · {{ value }} ×</button>
+			</div>
+			<DayContext :date="props.date" @insert="text => body += (body ? '\n' : '') + text" @attach="async file => { try { attachments.push((await api.attachment(props.date, file)).path) } catch { message = 'Foto konnte nicht angehängt werden.' } }" />
 			<div class="meta-row">
 				<label class="attach">
 					Datei anhängen

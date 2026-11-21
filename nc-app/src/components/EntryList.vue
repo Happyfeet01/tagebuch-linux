@@ -1,8 +1,21 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+import { decryptPayload } from '../crypto'
 import type { Entry } from '../api'
 import { formatDate, stars } from '../api'
 
-defineProps<{ entries: Entry[], emptyText: string }>()
+const props = defineProps<{ entries: Entry[], emptyText: string }>()
+const display = ref<Entry[]>([])
+watch(() => props.entries, async (rows, _, onCleanup) => {
+	let current = true
+	onCleanup(() => { current = false })
+	const resolved = await Promise.all(rows.map(async entry => {
+		if (!entry.encrypted) return entry
+		const payload = await decryptPayload(entry.body)
+		return payload ? { ...entry, ...payload } : { ...entry, body: '', heading: 'Verschlüsselter Eintrag' }
+	}))
+	if (current) display.value = resolved
+}, { immediate: true })
 const emit = defineEmits<{ open: [entry: Entry] }>()
 </script>
 
@@ -10,7 +23,7 @@ const emit = defineEmits<{ open: [entry: Entry] }>()
 	<div class="entry-list">
 		<p v-if="entries.length === 0" class="empty">{{ emptyText }}</p>
 		<button
-			v-for="entry in entries"
+			v-for="entry in display"
 			:key="entry.id ?? entry.date + (entry.time ?? '')"
 			class="entry-row"
 			type="button"

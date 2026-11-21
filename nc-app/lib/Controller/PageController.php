@@ -34,6 +34,14 @@ class PageController extends Controller {
 		parent::__construct($appName, $request);
 	}
 
+	private function journalPage(string $app, string $template, array $params): TemplateResponse {
+		$response = new TemplateResponse($app, $template, $params);
+		$policy = new \OCP\AppFramework\Http\ContentSecurityPolicy();
+		$policy->addAllowedImageDomain('https://tile.openstreetmap.org');
+		$response->setContentSecurityPolicy($policy);
+		return $response;
+	}
+
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[OpenAPI(OpenAPI::SCOPE_IGNORE)]
@@ -44,7 +52,7 @@ class PageController extends Controller {
 			'href' => $this->urlGenerator->linkToRouteAbsolute('tagebuch.page.manifest'),
 			'crossorigin' => 'use-credentials',
 		]);
-		return new TemplateResponse(Application::APP_ID, 'index', ['token' => '']);
+		return $this->journalPage(Application::APP_ID, 'index', ['token' => '']);
 	}
 
 	#[NoCSRFRequired]
@@ -58,7 +66,7 @@ class PageController extends Controller {
 			'crossorigin' => 'use-credentials',
 		]);
 		$info = $t !== '' ? $this->tokens->verify($t) : null;
-		return new TemplateResponse(Application::APP_ID, 'index', [
+		return $this->journalPage(Application::APP_ID, 'index', [
 			'token' => $info !== null ? $t : '',
 		]);
 	}

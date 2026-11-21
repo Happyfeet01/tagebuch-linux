@@ -54,6 +54,9 @@ export interface Stats {
 }
 
 export const api = {
+	dayContext: (date: string, calendar: string) =>
+		unwrap<{ calendars: { id: string, name: string }[], events: string[], photos: Photo[] }>(
+			axios.get(generateOcsUrl('/apps/tagebuch/api/day-context'), { params: { date, calendar, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone } })),
 	entries: (from?: string, to?: string) =>
 		unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/entries'), { params: { from, to } })),
 	day: (date: string) => unwrap<Entry[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/day/' + date))),
