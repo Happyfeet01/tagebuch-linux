@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { api, type Entry } from './api'
+import DiariumExport from './components/DiariumExport.vue'
 import EntryList from './components/EntryList.vue'
 import CalendarView from './components/CalendarView.vue'
 import OnThisDayView from './components/OnThisDayView.vue'
@@ -9,7 +10,7 @@ import SearchView from './components/SearchView.vue'
 import StatsView from './components/StatsView.vue'
 import SettingsView from './components/SettingsView.vue'
 
-type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings'
+type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings' | 'export'
 
 const view = ref<View>('timeline')
 const entries = ref<Entry[]>([])
@@ -65,6 +66,7 @@ onMounted(async () => {
 			<button type="button" :class="{ active: view === 'search' && editorDate === null }" @click="showView('search')">Suche</button>
 			<button type="button" :class="{ active: view === 'stats' && editorDate === null }" @click="showView('stats')">Statistik</button>
 			<button type="button" :class="{ active: view === 'settings' && editorDate === null }" @click="showView('settings')">Einstellungen</button>
+			<button type="button" :class="{ active: view === 'export' && editorDate === null }" @click="showView('export')">Diarium-Export</button>
 			<button type="button" class="new" @click="openDate(todayIso())">+ Neu</button>
 		</nav>
 
@@ -92,6 +94,7 @@ onMounted(async () => {
 				/>
 				<SearchView v-else-if="view === 'search'" @open="openEntry" />
 				<StatsView v-else-if="view === 'stats'" />
+				<DiariumExport v-else-if="view === 'export'" :entries="entries" />
 				<SettingsView v-else-if="view === 'settings'" />
 			</template>
 		</main>
