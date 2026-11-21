@@ -10,6 +10,11 @@ export function htmlEntries(source: string, contents: string): HtmlEntry[] {
 	const template = document.createElement('template')
 	template.innerHTML = contents
 	const root = template.content
+	if (/(?:^|\/)index\.html?$/i.test(source) && [...root.querySelectorAll('a[href]')].some(link =>
+		/^(?:\.\/)?Entries\/[^?#]+\.html?(?:[?#]|$)/i.test(link.getAttribute('href') || ''))) {
+		throw new Error('Dies ist das Inhaltsverzeichnis von Apple Journal. Wähle die ZIP-Datei mit dem Ordner Entries oder eine HTML-Datei aus Entries.')
+	}
+
 	root.querySelectorAll('style, script, noscript, head, title, .assetGrid').forEach(el => el.remove())
 	const articles = [...root.querySelectorAll('article')]
 	return (articles.length ? articles : [root]).map(section => {
