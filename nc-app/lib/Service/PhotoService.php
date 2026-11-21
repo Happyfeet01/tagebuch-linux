@@ -113,8 +113,8 @@ class PhotoService {
 				$sourcePath .= '/' . $day;
 			}
 			foreach ($source->getDirectoryListing() as $file) {
-				if ($sameDay && $file instanceof File && $source === $monthFolder
-					&& !preg_match('/(?<![0-9])' . $year . '[-_]?' . $month . '[-_]?' . $day . '(?![0-9])/', $file->getName())) {
+				if ($file instanceof File && $source === $monthFolder
+					&& !preg_match('/(?<![0-9])' . $yearDir . '[-_]?' . $month . '[-_]?' . $day . '(?![0-9])/', $file->getName())) {
 					continue;
 				}
 				if ($file instanceof File && self::isMedia($file->getName())) {
