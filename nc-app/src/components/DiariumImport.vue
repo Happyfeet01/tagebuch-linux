@@ -11,13 +11,22 @@ const busy = ref(false)
 const message = ref('')
 
 async function choose(event: Event) {
-	const file = (event.target as HTMLInputElement).files?.[0]
+	const input = event.target as HTMLInputElement
+	const file = input.files?.[0]
+	input.value = ''
 	rows.value = []
 	message.value = ''
 	if (!file) return
 	busy.value = true
 	try {
-		rows.value = file.name.toLowerCase().endsWith('.diary') ? await readDiaryBackup(file) : parseDiarium(await file.text())
+		const name = file.name.toLowerCase()
+		if (name.endsWith('.diary')) {
+			rows.value = await readDiaryBackup(file)
+		} else if (name.endsWith('.json') || file.type === 'application/json') {
+			rows.value = parseDiarium(await file.text())
+		} else {
+			throw new Error('Bitte wähle eine Diarium-Sicherung (.diary) oder einen JSON-Export (.json).')
+		}
 		message.value = rows.value.length + ' Einträge in der Datei gefunden.'
 	} catch (error) {
 		message.value = error instanceof SyntaxError ? 'Bitte wähle eine Diarium-JSON-Datei.' : String(error)
@@ -70,7 +79,7 @@ async function importEntries() {
 		<h3>Aus Diarium importieren</h3>
 		<p>Wähle eine Diarium-Sicherung (.diary) oder einen JSON-Export. Die Datei wird im Browser gelesen. Übernommen werden Datum, Uhrzeit, Titel, Text, Tags, Sterne und Koordinaten. Anhänge, Vorlagen, Personen, Tracker und Ereignisse bleiben in der Exportquelle.</p>
 		<p>Verschiedene Zeitstempel innerhalb einer Minute bleiben erhalten. Bei identischer Zeit bleiben unterschiedliche Inhalte durch Sekundenbruchteile unterscheidbar.</p>
-		<input type="file" aria-label="Diarium-Datei auswählen" accept=".diary,.json,application/json" :disabled="busy" @change="choose">
+		<input type="file" aria-label="Diarium-Datei auswählen" :disabled="busy" @change="choose">
 		<button type="button" :disabled="busy || !rows.length" @click="importEntries">Einträge importieren</button>
 		<p role="status">{{ message }}</p>
 	</section>

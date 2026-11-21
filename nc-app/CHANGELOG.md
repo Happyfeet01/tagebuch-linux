@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.5
+
+- Der Diarium-Import prüft das Dateiformat nach der Auswahl, damit der iPhone-Dateidialog Sicherungen mit der Endung .diary auswählen lässt.
+
 ## 0.3.4
 
 - Diarium-Sicherungen (.diary) lassen sich direkt im Browser einlesen und über die vorhandene Importvorschau übernehmen.
