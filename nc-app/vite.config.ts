@@ -18,8 +18,19 @@ export default createAppConfig(
 		[entry]: resolve(join('src', 'main.ts')),
 	},
 	{
-		assetFileNames: asset => asset.names.includes('worker.sql-asm.js') ? 'js/diarium-sql-[hash].js' : undefined,
-		createEmptyCSSEntryPoints: true,
+		assetFileNames: asset => {
+			if (asset.names.includes('worker.sql-asm.js')) return 'js/diarium-sql-[hash].js'
+			if (asset.names.some(name => name.endsWith('.css'))) return `css/tagebuch-${entry}.css`
+		},
+		// Util::addScript requests a classic .js entry.
+		config: {
+			build: {
+				cssCodeSplit: false,
+				rollupOptions: {
+					output: { format: 'iife', inlineDynamicImports: true, entryFileNames: 'js/tagebuch-[name].js' },
+				},
+			},
+		},
 		extractLicenseInformation: true,
 		thirdPartyLicense: false,
 	},

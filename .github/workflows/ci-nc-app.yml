@@ -75,6 +75,10 @@ jobs:
         run: |
           version=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.parse('appinfo/info.xml').findtext('version'))")
           tar --transform='s,^,tagebuch/,' -czf "../tagebuch-$version.tar.gz" appinfo css img js lib templates LICENSE
+          set -o pipefail
+          entry="tagebuch-main-${version//./-}"
+          tar -xOzf "../tagebuch-$version.tar.gz" "tagebuch/js/$entry.js" | node -e 'const src = require("fs").readFileSync(0, "utf8"); if (!src.trim()) process.exit(1); new (require("vm").Script)(src)'
+          tar -tzf "../tagebuch-$version.tar.gz" "tagebuch/css/$entry.css"
           echo "name=tagebuch-$version" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
