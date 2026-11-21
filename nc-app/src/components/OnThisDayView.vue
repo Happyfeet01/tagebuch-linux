@@ -45,7 +45,7 @@ watch(visible, (items, _, cleanup) => {
 		Object.values(loaded).forEach(url => { if (url) URL.revokeObjectURL(url) })
 	})
 	for (const item of items) {
-		api.photoData(item.path, controller.signal).then(data => {
+		api.photoData(item.path, controller.signal, item.etag).then(data => {
 			if (controller.signal.aborted) return
 			loaded[item.path] = URL.createObjectURL(new Blob([data], { type: mimeForName(item.name) }))
 			urls.value[item.path] = loaded[item.path]

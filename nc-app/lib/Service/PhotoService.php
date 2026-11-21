@@ -18,12 +18,13 @@ class PhotoService {
 		private IRootFolder $rootFolder,
 		private IUserSession $userSession,
 		private IConfig $config,
+		private CaptureDate $captureDate,
 		private ?string $fixedUserId = null,
 	) {
 	}
 
 	public function forUser(string $userId): self {
-		return new self($this->rootFolder, $this->userSession, $this->config, $userId);
+		return new self($this->rootFolder, $this->userSession, $this->config, $this->captureDate, $userId);
 	}
 
 	private function userId(): string {
@@ -106,19 +107,20 @@ class PhotoService {
 			if (!$monthFolder instanceof Folder) {
 				continue;
 			}
-			$source = $monthFolder;
-			$sourcePath = $folder . '/' . $yearDir . '/' . $month;
+			$monthPath = $folder . '/' . $yearDir . '/' . $month;
+			$folders = [$monthPath => $monthFolder];
 			if ($monthFolder->nodeExists($day) && $monthFolder->get($day) instanceof Folder) {
-				$source = $monthFolder->get($day);
-				$sourcePath .= '/' . $day;
+				$folders[$monthPath . '/' . $day] = $monthFolder->get($day);
 			}
-			foreach ($source->getDirectoryListing() as $file) {
-				if ($file instanceof File && $source === $monthFolder
-					&& !preg_match('/(?<![0-9])' . $yearDir . '[-_]?' . $month . '[-_]?' . $day . '(?![0-9])/', $file->getName())) {
-					continue;
-				}
-				if ($file instanceof File && self::isMedia($file->getName())) {
-					$photo = ['path' => $sourcePath . '/' . $file->getName(), 'name' => $file->getName(), 'year' => $yearDir];
+			foreach ($folders as $sourcePath => $source) {
+				foreach ($source->getDirectoryListing() as $file) {
+					if (!$file instanceof File || !self::isMedia($file->getName())) {
+						continue;
+					}
+					if ($source === $monthFolder && $this->mediaDate($file) !== "$yearDir-$month-$day") {
+						continue;
+					}
+					$photo = ['path' => $sourcePath . '/' . $file->getName(), 'name' => $file->getName(), 'year' => $yearDir, 'etag' => $file->getEtag()];
 					if ($sameDay) {
 						$photo['id'] = $file->getId();
 					}
@@ -130,8 +132,16 @@ class PhotoService {
 		return $photos;
 	}
 
+	private function mediaDate(File $file): ?string {
+		if (preg_match('/(?<![0-9])([0-9]{4})[-_]?([0-9]{2})[-_]?([0-9]{2})(?![0-9])/', $file->getName(), $m)
+			&& checkdate((int)$m[2], (int)$m[3], (int)$m[1])) {
+			return "$m[1]-$m[2]-$m[3]";
+		}
+		return $this->captureDate->fromFile($file);
+	}
+
 	/**
-	 * @return array{content: string, mime: string}
+	 * @return array{content: string, mime: string, etag: string}
 	 */
 	public function getPhoto(string $path): array {
 		$folder = $this->photoFolder();
@@ -149,6 +159,6 @@ class PhotoService {
 		if (!$node instanceof File) {
 			throw new \InvalidArgumentException('Keine Datei');
 		}
-		return ['content' => (string) $node->getContent(), 'mime' => self::mimeFor($node->getName())];
+		return ['content' => (string) $node->getContent(), 'mime' => self::mimeFor($node->getName()), 'etag' => $node->getEtag()];
 	}
 }

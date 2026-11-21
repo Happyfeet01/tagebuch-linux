@@ -61,10 +61,15 @@ class PhotoController extends OCSController {
 
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/api/photo')]
-	public function photo(string $path = ''): Response {
+	public function photo(string $path = '', string $version = ''): Response {
 		try {
 			$p = $this->photos->getPhoto($path);
-			return ContentResponse::stream($p['content'], $p['mime'], basename($path));
+			$response = ContentResponse::stream($p['content'], $p['mime'], basename($path));
+			if ($version !== '' && $version === $p['etag']) {
+				$response->addHeader('Cache-Control', 'private, max-age=86400');
+				$response->addHeader('Vary', 'Cookie, Authorization');
+			}
+			return $response;
 		} catch (\InvalidArgumentException $e) {
 			return new DataResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
 		}

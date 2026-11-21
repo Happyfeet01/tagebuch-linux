@@ -23,6 +23,10 @@ Funktionsumfang (Nachbau der Diarium-Features, siehe diariumapp.com):
   Fotos/Videos früherer Jahre werden in der Ansicht „An diesem Tag“ als Galerie angezeigt
 - iPhone: Web-App im Safari + „Zum Home-Bildschirm“ (PWA mit Manifest + Service Worker)
 
+Für Dateien ohne Datum im Namen liest die App im Monatsordner das Aufnahmedatum mit ExifTool (zuerst DateTimeOriginal, danach CreationDate und CreateDate). Unter Debian installiert `apt install libimage-exiftool-perl` das Programm nach `/usr/bin/exiftool`. Es muss in der PHP-Laufzeit der Nextcloud verfügbar sein, bei Docker also im App-Container. PHP benötigt `proc_open`. Dateien ohne passendes Datum bleiben ausgeblendet. Ein konfigurierter verteilter Nextcloud-Cache speichert das Ergebnis pro Dateiversion bis zu sieben Tage.
+
+Die Rückblickgalerie erlaubt dem Browser, geladene Aufnahmen bis zu 24 Stunden privat zwischenzuspeichern. Nach neuem Abruf der Jahresübersicht erhalten geänderte Dateien eine neue URL.
+
 ## Installation
 
 App nach `/var/www/nextcloud/apps/tagebuch` kopieren (oder als git-Checkout),

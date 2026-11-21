@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Tagebuch\Tests\Unit;
 
 use OCA\Tagebuch\Service\PhotoService;
+use OCA\Tagebuch\Service\CaptureDate;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -30,7 +31,9 @@ class PhotoServiceTest extends TestCase {
 		$this->rootFolder = $this->createMock(IRootFolder::class);
 		$this->userFolder = $this->createMock(Folder::class);
 		$this->rootFolder->method('getUserFolder')->with('lars')->willReturn($this->userFolder);
-		return new PhotoService($this->rootFolder, $session, $this->config, 'lars');
+		$capture = $this->createMock(CaptureDate::class);
+		$capture->method('fromFile')->willReturnCallback(static fn (File $file) => $file->getName() === 'IMG_1234.jpg' ? '2023-11-18' : null);
+		return new PhotoService($this->rootFolder, $session, $this->config, $capture, 'lars');
 	}
 
 	private function folder(string $name, array $listing = [], array $exists = [], array $children = []): Folder&MockObject {
@@ -76,7 +79,7 @@ class PhotoServiceTest extends TestCase {
 		$monthFolder = $this->folder('11', [
 			$this->file('IMG_20231118_1200.jpg'), $this->file('2023-11-18.mp4'),
 			$this->file('2023-11-17.jpg'), $this->file('2023-11-19.jpg'),
-			$this->file('2025-11-18.jpg'), $this->file('m.jpg'),
+			$this->file('IMG_1234.jpg'), $this->file('2025-11-18.jpg'), $this->file('m.jpg'),
 		], [], []);
 		$year2023 = $this->folder('2023');
 		$root = $this->folder('Fotos', [$year2023], ['2023/11'], ['2023/11' => $monthFolder]);
@@ -84,7 +87,7 @@ class PhotoServiceTest extends TestCase {
 		$this->userFolder->method('get')->willReturnCallback(static fn (string $p): Node => $p === 'Fotos' ? $root : throw new \RuntimeException('unexpected: ' . $p));
 
 		$photos = $svc->photosForDay('2025-11-18');
-		self::assertSame(['2023-11-18.mp4', 'IMG_20231118_1200.jpg'], array_column($photos, 'name'));
+		self::assertSame(['2023-11-18.mp4', 'IMG_1234.jpg', 'IMG_20231118_1200.jpg'], array_column($photos, 'name'));
 	}
 
 	public function testSelectedDayFiltersDatesInMonthFolder(): void {
