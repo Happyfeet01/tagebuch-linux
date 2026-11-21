@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.11
+
+- Karte und Ortssuche berücksichtigen alle passenden Tage. GPS-Punkte sind sichtbar und per Umkreis auffindbar.
+- Apple-Kartenangaben einlesen und fehlende Standorte bei erneutem Import ergänzen.
+
 ## 0.3.10
 
 - AppleJournalEntries lässt sich als Ordner direkt auswählen. Die App liest die HTML-Dateien aus Entries.

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { readDiaryBackup } from '../diaryBackup'
 import { api, type Entry } from '../api'
 import { decryptPayload, encryptPayload, isEncryptionEnabled, isUnlocked } from '../crypto'
-import { availableImportTime, importKey, parseDiarium } from '../diariumImport'
+import { importSlot, importKey, parseDiarium } from '../diariumImport'
 
 import { confirmedHtml, readAppleFolder, readJournalHtml, type HtmlEntry } from '../journalHtml'
 const pending = ref<HtmlEntry[]>([])
@@ -60,6 +60,7 @@ async function importEntries() {
 	busy.value = true
 	let saved = 0
 	let skipped = 0
+	let repaired = 0
 	const encrypt = isEncryptionEnabled()
 	try {
 		const existing = await api.entries()
@@ -67,29 +68,32 @@ async function importEntries() {
 		for (const entry of existing) {
 			const clear = entry.encrypted ? await decryptPayload(entry.body) : null
 			if (entry.encrypted && !clear) throw new Error('Bitte zuerst den Tresor entsperren.')
-			occupied.set(importKey(entry), clear ? { ...entry, ...clear } : entry)
+			occupied.set(importKey(entry), clear ? { ...entry, heading: clear.heading, body: clear.body, location: clear.location, tags: clear.tags, trackers: clear.trackers } : entry)
 		}
 		for (const row of rows.value) {
-			const slot = availableImportTime(row, occupied)
-			if (slot === null) { skipped++; continue }
+			const { time, repair } = importSlot(row, occupied)
+			if (!repair && time === null) { skipped++; continue }
 			if (encrypt !== isEncryptionEnabled() || (encrypt && !isUnlocked())) {
 				throw new Error('Bitte prüfe die Verschlüsselung und entsperre den Tresor.')
 			}
-			const payload = encrypt ? { ...row, body: await encryptPayload(row), heading: '', tags: [],
-				trackers: {}, location: null, encrypted: 1 } : row
-			await api.saveEntry({ ...payload, time: slot })
-			saved++
-			occupied.set(importKey({ ...row, time: slot }), row)
+			const target = repair || { ...row, time }
+			const { heading, body, tags, trackers, location } = target
+			const payload = (encrypt || target.encrypted) ? { ...target, body: await encryptPayload({ heading, body, tags, trackers, location }),
+				heading: '', tags: [], trackers: {}, location: null, encrypted: 1 } : target
+			const result = await api.saveEntry({ ...payload, expectedModified: repair?.modified })
+			if (repair) repaired++
+			else saved++
+			occupied.set(importKey(target), { ...target, id: result.id, modified: result.modified })
 			message.value = saved + ' Einträge gespeichert.'
 		}
-		message.value = saved + ' gespeichert, ' + skipped + ' bereits vorhanden.'
+		message.value = saved + ' neu, ' + repaired + ' Standorte ergänzt, ' + skipped + ' bereits vorhanden.'
 		rows.value = []
 	} catch (error) {
 		message.value = 'Import angehalten nach ' + saved + ' gespeicherten Einträgen. '
 			+ (error instanceof Error ? error.message : '') + ' Du kannst den Import erneut starten.'
 	} finally {
 		busy.value = false
-		if (saved) emit('imported')
+		if (saved || repaired) emit('imported')
 	}
 }
 </script>
@@ -97,7 +101,7 @@ async function importEntries() {
 <template>
 	<section>
 		<h3>Tagebuch importieren</h3>
-		<p>Wähle Diarium (.diary oder JSON) oder datierte HTML-Einträge aus einem Apple-Journal- oder Pixel-Journal-Export (ZIP oder HTML). Bei HTML werden Titel, Datum und Text übernommen. Die Datei wird im Browser gelesen. Bei Diarium werden Datum, Uhrzeit, Titel, Text, Tags, Sterne und Koordinaten übernommen. Anhänge, Vorlagen, Personen, Tracker und Ereignisse bleiben in der Exportquelle.</p>
+		<p>Wähle Diarium (.diary oder JSON) oder datierte HTML-Einträge aus einem Apple-Journal- oder Pixel-Journal-Export (ZIP oder HTML). Bei HTML werden Titel, Datum, Text und erkennbare Ortsangaben übernommen. Die Datei wird im Browser gelesen. Bei Diarium werden Datum, Uhrzeit, Titel, Text, Tags, Sterne und Koordinaten übernommen. Anhänge, Vorlagen, Personen, Tracker und Ereignisse bleiben in der Exportquelle.</p>
 		<p>Verschiedene Zeitstempel innerhalb einer Minute bleiben erhalten. Bei identischer Zeit bleiben unterschiedliche Inhalte durch Sekundenbruchteile unterscheidbar.</p>
 		<input type="file" aria-label="Tagebuchdatei auswählen" :disabled="busy" @change="choose">
 		<label>Apple-Journal-Ordner auswählen

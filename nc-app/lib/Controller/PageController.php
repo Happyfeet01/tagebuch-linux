@@ -38,6 +38,7 @@ class PageController extends Controller {
 		$response = new TemplateResponse($app, $template, $params);
 		$policy = new \OCP\AppFramework\Http\ContentSecurityPolicy();
 		$policy->addAllowedImageDomain('https://tile.openstreetmap.org');
+		$policy->addAllowedConnectDomain('https://geocoding-api.open-meteo.com');
 		$response->setContentSecurityPolicy($policy);
 		return $response;
 	}

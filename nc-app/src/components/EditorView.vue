@@ -31,7 +31,7 @@ function locate() {
 	message.value = ''
 	navigator.geolocation.getCurrentPosition(({ coords }) => {
 		if (version !== selectionVersion) return
-		location.value = { lat: coords.latitude, lon: coords.longitude }
+		location.value = { ...location.value, lat: coords.latitude, lon: coords.longitude }
 		locating.value = false
 	}, () => {
 		if (version !== selectionVersion) return
@@ -337,7 +337,7 @@ onMounted(async () => {
 				<input v-model="tagsInput" type="text" placeholder="Tags (kommagetrennt)" class="tags">
 				<label>Ort der Erinnerung
 					<input :value="location.name ?? ''" type="text" placeholder="z. B. Hallenbad Schlüchtern" :disabled="locating"
-						@input="location = { name: ($event.target as HTMLInputElement).value }">
+						@input="location = { ...location, name: ($event.target as HTMLInputElement).value }">
 				</label>
 				<button type="button" :disabled="locating" @click="locate">{{ locating ? 'Standort wird ermittelt …' : 'Aktuellen Standort übernehmen' }}</button>
 				<span v-if="location.lat != null && location.lon != null">{{ location.lat.toFixed(5) }}, {{ location.lon.toFixed(5) }}</span>
