@@ -15,7 +15,7 @@ class ReminderTime {
 		foreach ([
 			$this->config->getUserValue($uid, 'core', 'timezone', ''),
 			$this->config->getUserValue($uid, Application::APP_ID, 'reminder_timezone', ''),
-			$this->config->getSystemValueString('default_timezone', 'UTC'),
+			(string)$this->config->getSystemValue('default_timezone', 'UTC'),
 		] as $name) {
 			if ($name === '') continue;
 			try { return new \DateTimeZone($name); } catch (\Exception) { continue; }
