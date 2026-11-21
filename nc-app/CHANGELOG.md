@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.15
+
+- Das Installationspaket enthält den von Nextcloud angeforderten JavaScript-Einstieg als klassisches Skript.
+
 ## 0.3.14
 
 - Erinnerungen und Testmails verwenden die in `mail_smtpname` konfigurierte E-Mail-Adresse als Absender.
