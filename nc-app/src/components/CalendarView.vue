@@ -12,13 +12,7 @@ const month = ref(today.getMonth())
 const monthName = computed(() =>
 	new Date(year.value, month.value, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }))
 
-const marks = computed(() => {
-	const map: Record<string, number | null> = {}
-	for (const e of props.entries) {
-		map[e.date] = e.rating
-	}
-	return map
-})
+const marks = computed(() => new Set(props.entries.map(entry => entry.date)))
 
 const weeks = computed(() => {
 	const first = new Date(year.value, month.value, 1)
@@ -66,9 +60,9 @@ const isToday = (day: number): boolean => {
 						class="cell day"
 						:class="{
 							today: isToday(day),
-							'has-entry': iso(day) in marks,
-							[`rating-${marks[iso(day)]}`]: iso(day) in marks && marks[iso(day)] !== null,
+							'has-entry': marks.has(iso(day)),
 						}"
+						:aria-label="iso(day) + (marks.has(iso(day)) ? ', mit Eintrag' : '')"
 						@click="emit('select', iso(day))"
 					>
 						{{ day }}
@@ -80,6 +74,7 @@ const isToday = (day: number): boolean => {
 </template>
 
 <style scoped>
+.calendar { width: 100%; min-width: 0; color-scheme: light dark; }
 .calendar-header {
 	display: flex;
 	justify-content: space-between;
@@ -88,7 +83,7 @@ const isToday = (day: number): boolean => {
 }
 .calendar-grid {
 	display: grid;
-	grid-template-columns: repeat(7, 1fr);
+	grid-template-columns: repeat(7, minmax(0, 1fr));
 	gap: 2px;
 }
 .weekday {
@@ -97,7 +92,11 @@ const isToday = (day: number): boolean => {
 	color: var(--color-text-maxcontrast);
 }
 .cell {
-	aspect-ratio: 1;
+	width: 100%;
+	min-width: 0;
+	min-height: 36px;
+	padding: 0;
+	box-sizing: border-box;
 	border: none;
 	background: none;
 	border-radius: 6px;
@@ -113,11 +112,8 @@ const isToday = (day: number): boolean => {
 	font-weight: bold;
 }
 .day.has-entry {
+	color: light-dark(#155bb3, #87baff);
+	text-decoration: underline;
 	font-weight: bold;
 }
-.day.rating-5 { color: #e6a700; }
-.day.rating-4 { color: #d3a013; }
-.day.rating-3 { color: #8f7b3a; }
-.day.rating-2 { color: #a06a6a; }
-.day.rating-1 { color: #c64545; }
 </style>
