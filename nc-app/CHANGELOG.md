@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- Das Template lädt die gebauten JavaScript- und CSS-Dateien direkt. Der Produktionsbuild prüft, dass der Eintrag im Template zur App-Version passt.
+
 ## 0.3.1
 
 - JavaScript und CSS tragen die App-Version im Dateinamen. Der Service Worker räumt beim Aktualisieren die bisherigen Offline-Caches des Tagebuchs auf.

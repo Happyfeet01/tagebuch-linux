@@ -7,9 +7,15 @@ const info = readFileSync(new URL('./appinfo/info.xml', import.meta.url), 'utf8'
 const version = info.match(/<version>([0-9]+(?:\.[0-9]+)*)<\/version>/)?.[1]
 if (!version) throw new Error('Missing app version in appinfo/info.xml')
 
+const entry = `main-${version.replaceAll('.', '-')}`
+const template = readFileSync(new URL('./templates/index.php', import.meta.url), 'utf8')
+if (!template.includes(`$entry = 'tagebuch-${entry}';`)) {
+	throw new Error('Update the frontend entry in templates/index.php to match appinfo/info.xml')
+}
+
 export default createAppConfig(
 	{
-		[`main-${version.replaceAll('.', '-')}`]: resolve(join('src', 'main.ts')),
+		[entry]: resolve(join('src', 'main.ts')),
 	},
 	{
 		createEmptyCSSEntryPoints: true,

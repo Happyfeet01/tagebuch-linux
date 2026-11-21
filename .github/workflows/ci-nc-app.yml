@@ -7,6 +7,7 @@ on:
       - ".github/workflows/ci-nc-app.yml"
   push:
     branches:
+      - main
       - "vibe/**"
     paths:
       - "nc-app/**"
@@ -63,3 +64,15 @@ jobs:
       - name: Build
         working-directory: nc-app
         run: npm run build
+      - name: Installationspaket erstellen
+        id: package
+        working-directory: nc-app
+        run: |
+          version=$(python3 -c "import xml.etree.ElementTree as ET; print(ET.parse('appinfo/info.xml').findtext('version'))")
+          tar --transform='s,^,tagebuch/,' -czf "../tagebuch-$version.tar.gz" appinfo css img js lib templates LICENSE
+          echo "name=tagebuch-$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: ${{ steps.package.outputs.name }}.tar.gz
+          if-no-files-found: error
