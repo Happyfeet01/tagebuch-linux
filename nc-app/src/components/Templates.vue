@@ -31,7 +31,14 @@ onMounted(async () => { try { names.value = await api.templates() } catch { erro
 	<fieldset :disabled="busy"><select aria-label="Vorlage öffnen" @change="select(($event.target as HTMLSelectElement).value)">
 		<option value="">Neue Vorlage</option><option v-for="n in names" :key="n">{{ n }}</option>
 	</select>
-	<label>Name <input v-model="name"></label><label>Vorlagentext <textarea v-model="body" rows="4" /></label>
+	<label>Name <input v-model="name"></label><label>Vorlagentext <textarea v-model="body" rows="10" /></label>
 	<button type="button" :disabled="!name.trim()" @click="save">Vorlage speichern</button></fieldset>
 	<p role="status">{{ error }}</p>
 </details></template>
+
+<style scoped>
+fieldset, label { display: grid; gap: 8px; min-width: 0; }
+fieldset { padding: 8px 0; }
+input, textarea, select { box-sizing: border-box; width: 100%; max-width: none; font: inherit; }
+textarea { min-height: 12rem; resize: vertical; }
+</style>

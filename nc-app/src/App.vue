@@ -3,17 +3,15 @@ import { onMounted, ref } from 'vue'
 import { api, type Entry } from './api'
 import { initializeVault } from './crypto'
 import JournalBrowser from './components/JournalBrowser.vue'
-import DiariumExport from './components/DiariumExport.vue'
 import EntryList from './components/EntryList.vue'
 import CalendarView from './components/CalendarView.vue'
 import OnThisDayView from './components/OnThisDayView.vue'
 import DayContext from './components/DayContext.vue'
 import EditorView from './components/EditorView.vue'
 import SearchView from './components/SearchView.vue'
-import StatsView from './components/StatsView.vue'
 import SettingsView from './components/SettingsView.vue'
 
-type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settings' | 'browse' | 'export' | 'new'
+type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'settings' | 'browse' | 'new'
 
 const editor = ref<InstanceType<typeof EditorView>>()
 const ready = ref(false)
@@ -92,10 +90,8 @@ onMounted(async () => {
 			<button type="button" :class="{ active: view === 'calendar' && editorDate === null }" @click="showView('calendar')">Kalender</button>
 			<button type="button" :class="{ active: view === 'onthisday' && editorDate === null }" @click="showView('onthisday')">An diesem Tag</button>
 			<button type="button" :class="{ active: view === 'search' && editorDate === null }" @click="showView('search')">Suche</button>
-			<button type="button" :class="{ active: view === 'stats' && editorDate === null }" @click="showView('stats')">Statistik</button>
 			<button type="button" :class="{ active: view === 'settings' && editorDate === null }" @click="showView('settings')">Einstellungen</button>
-			<button type="button" @click="showView('browse')">Orte &amp; Anhänge</button>
-			<button type="button" @click="showView('export')">Diarium-Export</button>
+			<button type="button" :class="{ active: view === 'browse' && editorDate === null }" @click="showView('browse')">Orte &amp; Anhänge</button>
 			<button type="button" class="new" @click="chooseDate">+ Neu</button>
 		</nav>
 
@@ -130,10 +126,8 @@ onMounted(async () => {
 					@open="openEntry"
 				/>
 				<JournalBrowser v-else-if="view === 'browse'" :entries="entries" @open="openEntry" />
-				<DiariumExport v-else-if="view === 'export'" :entries="entries" />
 				<SearchView v-else-if="view === 'search'" @open="openEntry" />
-				<StatsView v-else-if="view === 'stats'" />
-				<SettingsView v-else-if="view === 'settings'" @imported="reload" />
+				<SettingsView :entries="entries" v-else-if="view === 'settings'" @imported="reload" />
 			</template>
 		</main>
 	</div>

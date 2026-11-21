@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.9
+
+- Mobiler Kalender mit blauen Eintragstagen, gemeinsame Eintragskarten und vier Tage je Seite in „Orte & Anhänge“. Größere Vorlagenfelder. Statistik und Datenaustausch in den Einstellungen. HTML- und ZIP-Textimport sowie HTML-ZIP- und Day-One-JSON-Export.
+
 ## 0.3.8
 
 - Rückblick und Tagesauswahl lesen bei undatierten Dateinamen das Aufnahmedatum per ExifTool. Geladene Medien im Rückblick erhalten einen privaten Browsercache mit dateiversionierten URLs.

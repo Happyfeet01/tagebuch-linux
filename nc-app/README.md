@@ -11,7 +11,7 @@ Funktionsumfang (Nachbau der Diarium-Features, siehe diariumapp.com):
 - Tägliche Einträge (Markdown-Text, Überschrift), mehrere Einträge pro Tag möglich
 - Anhänge: Fotos, Videos, Audio, beliebige Dateien (`<datum>-assets/` neben der `.md`)
 - Tags, Tracker, Sterne-Bewertung (1–5), Ort pro Eintrag
-- Kalender (Tage nach Bewertung gefärbt), Timeline, „An diesem Tag“ (Vorjahre + Fotos/Videos aus dem konfigurierten Foto-Ordner), Suche, Statistiken (Streak, Ø Bewertung, pro Monat)
+- Kalender (blaue Tageszahlen bei vorhandenen Einträgen), Timeline, „An diesem Tag“ (Vorjahre + Fotos/Videos aus dem konfigurierten Foto-Ordner), Suche, Statistiken (Streak, Ø Bewertung, pro Monat)
 - Vorlagen unter `Tagebuch/.templates/`
 - **Tägliche Schreib-Erinnerung per E-Mail um 20:00 Uhr** an die im NC-Benutzer hinterlegte E-Mail-Adresse,
   Versand über die **SMTP-Einstellungen der Nextcloud-Systemeinstellungen** (`config.php`, `mail_*`)

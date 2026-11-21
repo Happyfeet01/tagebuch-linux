@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { api, type Settings } from '../api'
+import { api, type Entry, type Settings } from '../api'
 import { hasEncryptionSetup, isEncryptionEnabled, isUnlocked, lockEncryption, setupEncryption, unlockEncryption } from '../crypto'
 import Templates from './Templates.vue'
 import Archive from './Archive.vue'
 import DiariumImport from './DiariumImport.vue'
 
+import DiariumExport from './DiariumExport.vue'
+import StatsView from './StatsView.vue'
+defineProps<{ entries: Entry[] }>()
+const statsOpen = ref(false)
 const emit = defineEmits<{ imported: [] }>()
 const settings = ref<Settings | null>(null)
 const message = ref('')
@@ -106,7 +110,13 @@ const save = async () => {
 
 		<Templates />
 		<Archive />
-		<DiariumImport @imported="emit('imported')" />
+		<details><summary>Import und Export</summary>
+			<DiariumImport @imported="emit('imported')" />
+			<DiariumExport :entries="entries" />
+		</details>
+		<details @toggle="statsOpen = ($event.target as HTMLDetailsElement).open">
+			<summary>Statistik</summary><StatsView v-if="statsOpen" />
+		</details>
 
 		<h3>Verschlüsselung (clientseitig, AES-GCM)</h3>
 		<p v-if="encState === 'setup'">

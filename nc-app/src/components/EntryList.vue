@@ -4,13 +4,13 @@ import { decryptPayload } from '../crypto'
 import type { Entry } from '../api'
 import { formatDate, stars } from '../api'
 
-const props = defineProps<{ entries: Entry[], emptyText: string }>()
+const props = defineProps<{ entries: Entry[], emptyText: string, details?: boolean, resolved?: boolean }>()
 const display = ref<Entry[]>([])
 watch(() => props.entries, async (rows, _, onCleanup) => {
 	let current = true
 	onCleanup(() => { current = false })
 	const resolved = await Promise.all(rows.map(async entry => {
-		if (!entry.encrypted) return entry
+		if (props.resolved || !entry.encrypted) return entry
 		const payload = await decryptPayload(entry.body)
 		return payload ? { ...entry, ...payload } : { ...entry, body: '', heading: 'Verschlüsselter Eintrag' }
 	}))
@@ -32,6 +32,8 @@ const emit = defineEmits<{ open: [entry: Entry] }>()
 			<span class="entry-date">{{ formatDate(entry.date, entry.time) }}</span>
 			<span v-if="entry.rating !== null" class="entry-stars">{{ stars(entry.rating) }}</span>
 			<span class="entry-title">{{ entry.heading || firstLine(entry.body) || '(ohne Text)' }}</span>
+			<span v-if="details && entry.location" class="entry-tags">{{ entry.location.name || 'Standort gespeichert' }}</span>
+			<span v-if="details && entry.attachments.length" class="entry-tags">{{ entry.attachments.length }} {{ entry.attachments.length === 1 ? 'Anhang' : 'Anhänge' }}</span>
 			<span v-if="entry.tags.length" class="entry-tags">{{ entry.tags.map((t) => '#' + t).join(' ') }}</span>
 		</button>
 	</div>
@@ -60,6 +62,10 @@ export default {
 .entry-row {
 	display: flex;
 	flex-wrap: wrap;
+	min-width: 0;
+	width: 100%;
+	height: auto;
+	white-space: normal;
 	gap: 8px;
 	align-items: baseline;
 	text-align: left;
@@ -79,7 +85,8 @@ export default {
 	color: #e6a700;
 }
 .entry-title {
-	flex: 1;
+	flex: 1 1 100%;
+	font-weight: 600;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

@@ -3,6 +3,9 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { formatDate, type Entry } from '../api'
 import { diariumCsv } from '../diariumCsv'
 
+import { portableJournal } from '../journalHtml'
+const format = ref<'csv' | 'html' | 'dayone'>('csv')
+const filename = computed(() => ({ csv: 'diarium-eintraege.csv', html: 'tagebuch-html.zip', dayone: 'Journal.json' })[format.value])
 const props = defineProps<{ entries: Entry[] }>()
 const selected = ref(new Set<Entry>())
 const chosen = computed(() => props.entries.filter(entry => selected.value.has(entry)))
@@ -18,7 +21,7 @@ function clearDownload() {
 	error.value = ''
 }
 
-watch(chosen, clearDownload, { flush: 'sync' })
+watch([chosen, format], clearDownload, { flush: 'sync' })
 onBeforeUnmount(clearDownload)
 
 async function prepare() {
@@ -26,9 +29,10 @@ async function prepare() {
 	const current = revision
 	busy.value = true
 	try {
-		const csv = await diariumCsv(chosen.value)
+		const blob = format.value === 'csv' ? new Blob([await diariumCsv(chosen.value)], { type: 'text/csv;charset=utf-8' })
+			: await portableJournal(chosen.value, format.value)
 		if (current === revision) {
-			url.value = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+			url.value = URL.createObjectURL(blob)
 		}
 	} catch (e) {
 		if (current === revision) error.value = e instanceof Error ? e.message : 'Export fehlgeschlagen.'
@@ -40,8 +44,12 @@ async function prepare() {
 
 <template>
 	<section>
-		<h2>Für Diarium exportieren</h2>
-		<p>Die CSV enthält deine ausgewählten Einträge im Klartext. Anhänge und Tracker sind nicht enthalten.</p>
+		<h2>Tagebuch exportieren</h2>
+		<p>Der Export enthält deine ausgewählten Einträge im Klartext. Anhänge und Tracker sind nicht enthalten.</p>
+		<label>Format <select v-model="format">
+			<option value="csv">Diarium (CSV)</option><option value="html">Lesbare HTML-Dateien (ZIP)</option>
+			<option value="dayone">Day One (JSON)</option></select></label>
+		<p v-if="format === 'dayone'">Für Apple Journal ist eine Übernahme über einen kompatiblen Day-One-Kurzbefehl möglich.</p>
 		<p v-if="!entries.length">Keine Einträge vorhanden.</p>
 		<template v-else>
 			<button type="button" @click="selected = new Set(entries)">Alle auswählen</button>
@@ -51,11 +59,11 @@ async function prepare() {
 				{{ formatDate(entry.date, entry.time) }} · {{ entry.encrypted ? 'Verschlüsselter Eintrag' : entry.heading || entry.body.split('\n')[0] || '(ohne Text)' }}
 			</label>
 			<button v-if="!url" type="button" :disabled="busy || !chosen.length" @click="prepare">
-				CSV erstellen ({{ chosen.length }})
+				Datei erstellen ({{ chosen.length }})
 			</button>
-			<a v-else :href="url" download="diarium-eintraege.csv">CSV herunterladen</a>
+			<a v-else :href="url" :download="filename">Datei herunterladen</a>
 			<p v-if="error" role="alert">{{ error }}</p>
-			<p>In Diarium unter Einstellungen → Datenbank → Aus anderer App migrieren → CSV importieren.</p>
+			<p v-if="format === 'csv'">In Diarium unter Einstellungen → Datenbank → Aus anderer App migrieren → CSV importieren.</p>
 		</template>
 	</section>
 </template>
