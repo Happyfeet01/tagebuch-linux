@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8
+
+- Rückblick und Tagesauswahl lesen bei undatierten Dateinamen das Aufnahmedatum per ExifTool. Geladene Medien im Rückblick erhalten einen privaten Browsercache mit dateiversionierten URLs.
+
 ## 0.3.7
 
 - „An diesem Tag“ berücksichtigt in Monatsordnern früherer Jahre nur Medien mit dem passenden Datum im Dateinamen.

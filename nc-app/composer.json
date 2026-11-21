@@ -21,6 +21,7 @@
 		"php": "^8.2"
 	},
 	"require-dev": {
+		"symfony/process": "^6.4",
 		"nextcloud/ocp": "dev-stable31",
 		"phpunit/phpunit": "^11.5"
 	},
