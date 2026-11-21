@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { api, type Entry, type Photo } from '../api'
 import { mimeForName } from '../crypto'
 import EntryList from './EntryList.vue'
@@ -7,49 +7,94 @@ import EntryList from './EntryList.vue'
 const props = defineProps<{ entries: Entry[] }>()
 const emit = defineEmits<{ open: [entry: Entry] }>()
 
-const photos = ref<{ photo: Photo, url: string }[]>([])
-const loading = ref(false)
+const photos = ref<Photo[]>([])
+const loading = ref(true)
+const listError = ref(false)
+const selected = ref('')
+const page = ref(0)
+const pageSize = 12
+const urls = ref<Record<string, string>>({})
+const isVideo = (name: string) => mimeForName(name).startsWith('video/')
 
-const isImage = (name: string): boolean => mimeForName(name).startsWith('image/')
-const isVideo = (name: string): boolean => mimeForName(name).startsWith('video/')
+const groups = computed(() => {
+	const years = new Map<string, { year: string, items: Photo[], images: number, videos: number }>()
+	for (const photo of photos.value) {
+		const group = years.get(photo.year) ?? { year: photo.year, items: [], images: 0, videos: 0 }
+		group.items.push(photo)
+		if (isVideo(photo.name)) group.videos++
+		else group.images++
+		years.set(photo.year, group)
+	}
+	return [...years.values()].sort((a, b) => b.year.localeCompare(a.year))
+})
 
-const loadPhotos = async () => {
-	loading.value = true
+const visible = computed(() => groups.value.find(group => group.year === selected.value)
+	?.items.slice(page.value * pageSize, (page.value + 1) * pageSize) ?? [])
+
+function toggle(year: string) {
+	page.value = 0
+	selected.value = selected.value === year ? '' : year
+}
+
+watch(visible, (items, _, cleanup) => {
+	const controller = new AbortController()
+	const loaded: Record<string, string> = {}
+	urls.value = {}
+	cleanup(() => {
+		controller.abort()
+		Object.values(loaded).forEach(url => { if (url) URL.revokeObjectURL(url) })
+	})
+	for (const item of items) {
+		api.photoData(item.path, controller.signal).then(data => {
+			if (controller.signal.aborted) return
+			loaded[item.path] = URL.createObjectURL(new Blob([data], { type: mimeForName(item.name) }))
+			urls.value[item.path] = loaded[item.path]
+		}).catch(() => {
+			if (!controller.signal.aborted) urls.value[item.path] = ''
+		})
+	}
+})
+
+onMounted(async () => {
 	try {
-		const list = await api.onThisDayPhotos()
-		const loaded = await Promise.all(list.map(async (p) => {
-			try {
-				const buf = await api.photoData(p.path)
-				return { photo: p, url: URL.createObjectURL(new Blob([buf], { type: mimeForName(p.name) })) }
-			} catch {
-				return null
-			}
-		}))
-		photos.value = loaded.filter((x): x is { photo: Photo, url: string } => x !== null)
+		photos.value = await api.onThisDayPhotos()
 	} catch {
-		photos.value = []
+		listError.value = true
 	} finally {
 		loading.value = false
 	}
-}
-
-watch(() => props.entries, loadPhotos)
-onMounted(loadPhotos)
+})
 </script>
 
 <template>
 	<div class="onthisday">
-		<div v-if="loading || photos.length" class="gallery">
+		<div v-if="loading || listError || groups.length" class="gallery">
 			<h3>Fotos &amp; Videos an diesem Tag</h3>
-			<p v-if="loading" class="hint">Lade Fotos …</p>
-			<div v-else class="grid">
-				<a v-for="p in photos" :key="p.photo.path" :href="p.url" target="_blank" rel="noopener" class="tile">
-					<img v-if="isImage(p.photo.name)" :src="p.url" :alt="p.photo.name" loading="lazy">
-					<video v-else-if="isVideo(p.photo.name)" :src="p.url" muted preload="metadata" />
-					<span v-else class="filename">{{ p.photo.name }}</span>
-					<em class="year">{{ p.photo.year }}</em>
-				</a>
-			</div>
+			<p v-if="loading" class="hint">Lade Jahresübersicht …</p>
+			<p v-else-if="listError" role="status">Die Jahresübersicht konnte nicht geladen werden.</p>
+			<section v-for="group in groups" :key="group.year">
+				<button type="button" class="folder" :aria-expanded="selected === group.year" @click="toggle(group.year)">
+					<span aria-hidden="true">📁</span>
+					<strong>{{ group.year }}</strong>
+					<span>{{ group.images }} {{ group.images === 1 ? 'Bild' : 'Bilder' }}<template v-if="group.videos"> · {{ group.videos }} {{ group.videos === 1 ? 'Video' : 'Videos' }}</template></span>
+				</button>
+				<div v-if="selected === group.year">
+					<div class="grid">
+						<template v-for="p in visible" :key="p.path">
+							<a v-if="urls[p.path]" :href="urls[p.path]" target="_blank" rel="noopener" class="tile" :aria-label="p.name">
+								<video v-if="isVideo(p.name)" :src="urls[p.path]" muted preload="metadata" />
+								<img v-else :src="urls[p.path]" :alt="p.name">
+							</a>
+							<span v-else class="tile filename">{{ urls[p.path] === '' ? 'Laden fehlgeschlagen' : 'Lädt …' }} · {{ p.name }}</span>
+						</template>
+					</div>
+					<div v-if="group.items.length > pageSize" class="pages">
+						<button type="button" :disabled="page === 0" @click="page--">Zurück</button>
+						<span aria-live="polite">{{ page + 1 }} / {{ Math.ceil(group.items.length / pageSize) }}</span>
+						<button type="button" :disabled="(page + 1) * pageSize >= group.items.length" @click="page++">Weiter</button>
+					</div>
+				</div>
+			</section>
 		</div>
 		<EntryList
 			:entries="entries"
@@ -91,17 +136,21 @@ onMounted(loadPhotos)
 	object-fit: cover;
 	display: block;
 }
-.tile .year {
-	position: absolute;
-	left: 4px;
-	bottom: 4px;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
-	font-size: 0.75em;
-	padding: 1px 6px;
-	border-radius: var(--border-radius-pill);
+.folder, .pages {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 8px 0;
 }
-.tile .filename {
+.folder {
+	width: 100%;
+	justify-content: flex-start;
+	padding: 8px 14px;
+	min-height: 44px;
+}
+.folder span:last-child { margin-inline-start: auto; }
+.pages { justify-content: center; }
+.tile.filename {
 	padding: 6px;
 	font-size: 0.8em;
 	word-break: break-all;

@@ -13,7 +13,6 @@ use OCP\IUserSession;
 
 class PhotoService {
 	private const MEDIA_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'avif', 'heic', 'heif', 'mp4', 'mov', 'm4v', 'webm', '3gp'];
-	private const MAX_PHOTOS = 100;
 
 	public function __construct(
 		private IRootFolder $rootFolder,
@@ -119,10 +118,11 @@ class PhotoService {
 					continue;
 				}
 				if ($file instanceof File && self::isMedia($file->getName())) {
-					$photos[] = ['path' => $sourcePath . '/' . $file->getName(), 'name' => $file->getName(), 'year' => $yearDir];
-					if (count($photos) >= self::MAX_PHOTOS) {
-						break 2;
+					$photo = ['path' => $sourcePath . '/' . $file->getName(), 'name' => $file->getName(), 'year' => $yearDir];
+					if ($sameDay) {
+						$photo['id'] = $file->getId();
 					}
+					$photos[] = $photo;
 				}
 			}
 		}

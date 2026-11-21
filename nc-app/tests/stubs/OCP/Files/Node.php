@@ -9,6 +9,8 @@ namespace OCP\Files;
  * In der echten Nextcloud wird das OCP-Interface aus dem Server geladen.
  */
 interface Node {
+	public function getId(): int;
+
 	public function getName(): string;
 
 	public function getPath(): string;
