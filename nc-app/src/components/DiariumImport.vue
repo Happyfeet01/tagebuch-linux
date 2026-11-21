@@ -5,7 +5,7 @@ import { api, type Entry } from '../api'
 import { decryptPayload, encryptPayload, isEncryptionEnabled, isUnlocked } from '../crypto'
 import { availableImportTime, importKey, parseDiarium } from '../diariumImport'
 
-import { confirmedHtml, readJournalHtml, type HtmlEntry } from '../journalHtml'
+import { confirmedHtml, readAppleFolder, readJournalHtml, type HtmlEntry } from '../journalHtml'
 const pending = ref<HtmlEntry[]>([])
 const emit = defineEmits<{ imported: [] }>()
 const rows = ref<Entry[]>([])
@@ -14,7 +14,8 @@ const message = ref('')
 
 async function choose(event: Event) {
 	const input = event.target as HTMLInputElement
-	const file = input.files?.[0]
+	const files = Array.from(input.files ?? [])
+	const file = files[0]
 	input.value = ''
 	rows.value = []
 	pending.value = []
@@ -23,10 +24,10 @@ async function choose(event: Event) {
 	busy.value = true
 	try {
 		const name = file.name.toLowerCase()
-		if (name.endsWith('.diary')) {
+		if (!input.webkitdirectory && name.endsWith('.diary')) {
 			rows.value = await readDiaryBackup(file)
-		} else if (/\.(zip|html?)$/.test(name)) {
-			const html = await readJournalHtml(file)
+		} else if (input.webkitdirectory || /\.(zip|html?)$/.test(name)) {
+			const html = input.webkitdirectory ? await readAppleFolder(files) : await readJournalHtml(file)
 			if (html.some(entry => !entry.date)) {
 				pending.value = html
 				message.value = 'Bitte ergänze fehlende Datumsangaben vor dem Import.'
@@ -38,7 +39,7 @@ async function choose(event: Event) {
 		} else {
 			throw new Error('Bitte wähle eine Diarium-Sicherung (.diary), JSON, HTML oder ein ZIP mit HTML-Einträgen.')
 		}
-		message.value = rows.value.length + ' Einträge in der Datei gefunden.'
+		message.value = rows.value.length + ' Einträge gefunden.'
 	} catch (error) {
 		message.value = error instanceof SyntaxError ? 'Die JSON-Datei konnte nicht gelesen werden.' : String(error)
 	} finally {
@@ -99,6 +100,9 @@ async function importEntries() {
 		<p>Wähle Diarium (.diary oder JSON) oder datierte HTML-Einträge aus einem Apple-Journal- oder Pixel-Journal-Export (ZIP oder HTML). Bei HTML werden Titel, Datum und Text übernommen. Die Datei wird im Browser gelesen. Bei Diarium werden Datum, Uhrzeit, Titel, Text, Tags, Sterne und Koordinaten übernommen. Anhänge, Vorlagen, Personen, Tracker und Ereignisse bleiben in der Exportquelle.</p>
 		<p>Verschiedene Zeitstempel innerhalb einer Minute bleiben erhalten. Bei identischer Zeit bleiben unterschiedliche Inhalte durch Sekundenbruchteile unterscheidbar.</p>
 		<input type="file" aria-label="Tagebuchdatei auswählen" :disabled="busy" @change="choose">
+		<label>Apple-Journal-Ordner auswählen
+			<input type="file" webkitdirectory multiple :disabled="busy" @change="choose">
+		</label>
 		<form v-if="pending.length" @submit.prevent="confirmDates">
 			<label v-for="entry in pending.filter(item => !item.date.includes('T'))" :key="pending.indexOf(entry)">
 				{{ entry.heading || entry.source }} <input type="date" v-model="entry.date" required>

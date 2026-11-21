@@ -12,7 +12,7 @@ export function htmlEntries(source: string, contents: string): HtmlEntry[] {
 	const root = template.content
 	if (/(?:^|\/)index\.html?$/i.test(source) && [...root.querySelectorAll('a[href]')].some(link =>
 		/^(?:\.\/)?Entries\/[^?#]+\.html?(?:[?#]|$)/i.test(link.getAttribute('href') || ''))) {
-		throw new Error('Dies ist das Inhaltsverzeichnis von Apple Journal. Wähle die ZIP-Datei mit dem Ordner Entries oder eine HTML-Datei aus Entries.')
+		throw new Error('Dies ist das Inhaltsverzeichnis von Apple Journal. Wähle den Exportordner AppleJournalEntries, seine ZIP-Datei oder eine HTML-Datei aus Entries.')
 	}
 
 	root.querySelectorAll('style, script, noscript, head, title, .assetGrid').forEach(el => el.remove())
@@ -33,6 +33,16 @@ export function htmlEntries(source: string, contents: string): HtmlEntry[] {
 		wrapper.append(...[...body.childNodes].map(node => node.cloneNode(true)))
 		return { date, heading, html: wrapper.innerHTML, source: filename }
 	})
+}
+
+export async function readAppleFolder(files: File[]): Promise<HtmlEntry[]> {
+	const entries: HtmlEntry[] = []
+	for (const file of files) {
+		if (!/^(?:[^/]+\/)?Entries\/(?!\._)[^/]+\.html?$/i.test(file.webkitRelativePath)) continue
+		entries.push(...htmlEntries(file.name, await file.text()))
+	}
+	if (!entries.length) throw new Error('Keine HTML-Einträge gefunden. Wähle den Ordner AppleJournalEntries mit seinem Unterordner Entries.')
+	return entries
 }
 
 export async function readJournalHtml(file: File): Promise<HtmlEntry[]> {
