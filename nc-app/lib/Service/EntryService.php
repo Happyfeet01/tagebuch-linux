@@ -83,7 +83,7 @@ class EntryService {
 			$entry['created'] = $now;
 		}
 		$entry['modified'] = $now;
-		$entity = Entry::fromArray($this->userId(), $entry);
+		$entity = Entry::fromArray($this->userId(), $entry, $existing ?? null);
 		$saved = $this->entryMapper->saveEntry($entity);
 		return $saved->jsonSerialize();
 	}
@@ -111,7 +111,7 @@ class EntryService {
 	public function allTags(): array {
 		$tags = [];
 		foreach ($this->entryMapper->findAll($this->userId()) as $entry) {
-			foreach ((json_decode($entry->getTags(), true) ?: []) as $tag) {
+			foreach ((json_decode($entry->getTags() ?? '[]', true) ?: []) as $tag) {
 				$tags[$tag] = true;
 			}
 		}
@@ -215,7 +215,7 @@ class EntryService {
 		if ($template === null) {
 			throw new \InvalidArgumentException('Vorlage nicht gefunden: ' . $name);
 		}
-		return $template->getBody();
+		return $template->getBody() ?? '';
 	}
 
 	public function saveTemplate(string $name, string $body): string {

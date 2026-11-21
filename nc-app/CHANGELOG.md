@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.7
+
+- Der Editor nutzt die OCS-Routen der App. Eine Nextcloud-Migration legt fehlende Tagebuchtabellen an und ergänzt bei älteren Eintragstabellen das Verschlüsselungskennzeichen.
+- Einträge behalten beim Bearbeiten ihre ID, Uhrzeit und Tracker. Änderungen an bestehenden Feldern, einschließlich Entfernen eines Orts, werden in der Datenbank gespeichert.
+- Im Editor lässt sich ein Erinnerungsort eingeben oder der aktuelle Standort nach Browserfreigabe übernehmen. Gesperrte Einträge sind vor Überschreiben geschützt.
+
 ## 0.2.4
 
 - Fix: `OC\BackgroundJob\JobList::has()/add()` verlangen in NC 35 zwingend 2 Argumente („Too few arguments … exactly 2 expected“, App konnte nicht booten). `Application::boot()` übergibt jetzt explizit `null` als zweites Argument; IJobList-Stub entsprechend strenger, ApplicationTest assertet die 2-Argumnent-Aufrufe

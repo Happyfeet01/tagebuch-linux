@@ -37,41 +37,45 @@ use OCP\AppFramework\Db\Entity;
  * @method void setModifiedAt(?string $modifiedAt)
  */
 class Entry extends Entity implements \JsonSerializable {
-	protected ?int $id = null;
 	protected string $userId = '';
 	protected string $entryDate = '';
 	protected ?string $entryTime = null;
-	protected string $heading = '';
-	protected string $body = '';
+	protected ?string $heading = null;
+	protected ?string $body = null;
 	protected ?int $rating = null;
-	protected string $tags = '[]';
-	protected string $trackers = '[]';
+	protected ?string $tags = null;
+	protected ?string $trackers = null;
 	protected ?string $location = null;
-	protected string $attachments = '[]';
+	protected ?string $attachments = null;
 	protected ?int $encrypted = 0;
 	protected ?string $createdAt = null;
 	protected ?string $modifiedAt = null;
+
+	public function __construct() {
+		$this->addType('rating', 'integer');
+		$this->addType('encrypted', 'integer');
+	}
 
 	public function jsonSerialize(): array {
 		return [
 			'id' => $this->id,
 			'date' => $this->entryDate,
 			'time' => $this->entryTime,
-			'heading' => $this->heading,
-			'body' => $this->body,
+			'heading' => $this->heading ?? '',
+			'body' => $this->body ?? '',
 			'rating' => $this->rating,
-			'tags' => json_decode($this->tags, true) ?: [],
-			'trackers' => json_decode($this->trackers, true) ?: [],
+			'tags' => json_decode($this->tags ?? '[]', true) ?: [],
+			'trackers' => json_decode($this->trackers ?? '[]', true) ?: [],
 			'location' => $this->location !== null && $this->location !== '' ? json_decode($this->location, true) : null,
-			'attachments' => json_decode($this->attachments, true) ?: [],
+			'attachments' => json_decode($this->attachments ?? '[]', true) ?: [],
 			'encrypted' => (int) ($this->encrypted ?? 0),
 			'created' => $this->createdAt,
 			'modified' => $this->modifiedAt,
 		];
 	}
 
-	public static function fromArray(string $userId, array $data): self {
-		$entry = new self();
+	public static function fromArray(string $userId, array $data, ?self $existing = null): self {
+		$entry = $existing ?? new self();
 		$entry->setId(isset($data['id']) ? (int) $data['id'] : null);
 		$entry->setUserId($userId);
 		$entry->setEntryDate((string) $data['date']);

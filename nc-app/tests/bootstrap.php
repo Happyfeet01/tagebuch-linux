@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+$loader = require __DIR__ . '/../vendor/autoload.php';
 
 $stubs = [
 	\OCP\IConfig::class => __DIR__ . '/stubs/OCP/IConfig.php',
@@ -29,3 +29,6 @@ foreach ($stubs as $class => $file) {
 		require_once $file;
 	}
 }
+
+// Load framework contracts not covered by the off-server test doubles.
+$loader->addPsr4('OCP\\', __DIR__ . '/../vendor/nextcloud/ocp/OCP');

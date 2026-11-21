@@ -14,6 +14,7 @@ type View = 'timeline' | 'calendar' | 'onthisday' | 'search' | 'stats' | 'settin
 const view = ref<View>('timeline')
 const entries = ref<Entry[]>([])
 const onThisDayEntries = ref<Entry[]>([])
+const editorId = ref<number>()
 const editorDate = ref<string | null>(null)
 
 const todayIso = (): string => {
@@ -27,10 +28,12 @@ const reload = async () => {
 }
 
 const openEntry = (entry: Entry) => {
+	editorId.value = entry.id
 	editorDate.value = entry.date
 }
 
 const openDate = (date: string) => {
+	editorId.value = undefined
 	editorDate.value = date
 }
 
@@ -68,6 +71,8 @@ onMounted(async () => {
 		<main>
 			<EditorView
 				v-if="editorDate !== null"
+				:key="editorDate + (editorId ?? '')"
+				:entry-id="editorId"
 				:date="editorDate"
 				@saved="reload"
 				@closed="editorDate = null"

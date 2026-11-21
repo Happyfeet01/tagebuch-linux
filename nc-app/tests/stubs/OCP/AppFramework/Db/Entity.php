@@ -8,6 +8,10 @@ namespace OCP\AppFramework\Db;
  * Minimaler Stub der OCP-Entity für Standalone-Unit-Tests (magische Getter/Setter via __call).
  */
 class Entity implements \JsonSerializable {
+	public $id;
+
+	public function addType(string $name, string $type): void {}
+
 	public function __call(string $methodName, array $args) {
 		if (str_starts_with($methodName, 'set')) {
 			$property = lcfirst(substr($methodName, 3));
