@@ -71,17 +71,20 @@ class PhotoServiceTest extends TestCase {
 		$this->assertSame('Fotos/2024/11/18/b.mp4', $photos[1]['path']);
 	}
 
-	public function testPhotosForDayFallsBackToMonthFolder(): void {
+	public function testAnniversaryMatchesOnlyTheDayInTheHistoricalMonthFolder(): void {
 		$svc = $this->service('Fotos');
-		$monthFolder = $this->folder('11', [$this->file('m.jpg')], [], []);
+		$monthFolder = $this->folder('11', [
+			$this->file('IMG_20231118_1200.jpg'), $this->file('2023-11-18.mp4'),
+			$this->file('2023-11-17.jpg'), $this->file('2023-11-19.jpg'),
+			$this->file('2025-11-18.jpg'), $this->file('m.jpg'),
+		], [], []);
 		$year2023 = $this->folder('2023');
 		$root = $this->folder('Fotos', [$year2023], ['2023/11'], ['2023/11' => $monthFolder]);
 		$this->userFolder->method('nodeExists')->willReturnCallback(static fn (string $p): bool => $p === 'Fotos');
 		$this->userFolder->method('get')->willReturnCallback(static fn (string $p): Node => $p === 'Fotos' ? $root : throw new \RuntimeException('unexpected: ' . $p));
 
 		$photos = $svc->photosForDay('2025-11-18');
-		$this->assertCount(1, $photos);
-		$this->assertSame('Fotos/2023/11/m.jpg', $photos[0]['path']);
+		self::assertSame(['2023-11-18.mp4', 'IMG_20231118_1200.jpg'], array_column($photos, 'name'));
 	}
 
 	public function testSelectedDayFiltersDatesInMonthFolder(): void {

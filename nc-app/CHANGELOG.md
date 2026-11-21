@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7
+
+- „An diesem Tag“ berücksichtigt in Monatsordnern früherer Jahre nur Medien mit dem passenden Datum im Dateinamen.
+
 ## 0.3.6
 
 - Die Datumswahl zeigt Termine aller zugänglichen Kalender und Fotovorschauen für den gewählten Tag.
