@@ -48,7 +48,9 @@ class MailService {
 		$message->setSubject($subject);
 		$message->setPlainBody($plain);
 		$message->setHtmlBody($html);
-		$this->mailer->send($message);
+		if ($this->mailer->send($message) !== []) {
+			throw new \RuntimeException('Der Mailserver hat den Empfänger abgelehnt.');
+		}
 	}
 
 	public function sendTestMail(string $email): void {
@@ -57,6 +59,8 @@ class MailService {
 		$message->setFrom([$this->fromAddress()]);
 		$message->setSubject('Tagebuch: Test-Mail über die Nextcloud-SMTP-Einstellungen');
 		$message->setPlainBody("Wenn du das liest, funktioniert der Versand über die in den Nextcloud-Systemeinstellungen konfigurierten Mailserver-Einstellungen.\n");
-		$this->mailer->send($message);
+		if ($this->mailer->send($message) !== []) {
+			throw new \RuntimeException('Der Mailserver hat den Empfänger abgelehnt.');
+		}
 	}
 }

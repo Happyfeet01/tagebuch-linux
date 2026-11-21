@@ -60,6 +60,16 @@ class PhotoController extends OCSController {
 	}
 
 	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/api/photo-location')]
+	public function photoLocation(string $path): DataResponse {
+		try {
+			return new DataResponse(['location' => $this->photos->coordinates($path)]);
+		} catch (\InvalidArgumentException $e) {
+			return new DataResponse([], 404);
+		}
+	}
+
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/api/photo')]
 	public function photo(string $path = '', string $version = ''): Response {
 		try {

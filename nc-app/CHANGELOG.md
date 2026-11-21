@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.13
+
+- Ungefähre Ortsnamen lokal bestimmen und GPS-Daten eines Tagesfotos im Editor übernehmen.
+- Erinnerungsmail ab 20 Uhr in der persönlichen Zeitzone beim nächsten Hintergrundlauf auslösen und den letzten Versand anzeigen.
+
 ## 0.3.12
 
 - Freiwillige Angaben zu Stimmung, Energie, Gefühlen und Schlafdauer direkt im Editor auswählen. Eigene Felder bleiben verfügbar.

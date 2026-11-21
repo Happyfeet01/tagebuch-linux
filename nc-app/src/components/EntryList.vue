@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { locationLabel } from '../places'
+import { displayPlace } from '../placeNames'
 import { ref, watch } from 'vue'
 import { decryptPayload } from '../crypto'
 import type { Entry } from '../api'
@@ -33,7 +33,7 @@ const emit = defineEmits<{ open: [entry: Entry] }>()
 			<span class="entry-date">{{ formatDate(entry.date, entry.time) }}</span>
 			<span v-if="entry.rating !== null" class="entry-stars">{{ stars(entry.rating) }}</span>
 			<span class="entry-title">{{ entry.heading || firstLine(entry.body) || '(ohne Text)' }}</span>
-			<span v-if="details && locationLabel(entry.location)" class="entry-tags">{{ locationLabel(entry.location) }}</span>
+			<span v-if="details && displayPlace(entry.location)" class="entry-tags">{{ displayPlace(entry.location) }}</span>
 			<span v-if="details && entry.attachments.length" class="entry-tags">{{ entry.attachments.length }} {{ entry.attachments.length === 1 ? 'Anhang' : 'Anhänge' }}</span>
 			<span v-if="entry.tags.length" class="entry-tags">{{ entry.tags.map((t) => '#' + t).join(' ') }}</span>
 		</button>

@@ -29,6 +29,9 @@ export interface Entry {
 }
 
 export interface Settings {
+	reminder_timezone?: string
+	reminder_zone: string
+	reminder_sent_date: string
 	reminder_enabled: string
 	theme: string
 	accent: string
@@ -88,6 +91,8 @@ export const api = {
 		axios.get(generateOcsUrl(`/apps/tagebuch/api/entry/${date}/attachment/${encodeURIComponent(name)}`), { responseType: 'arraybuffer' })
 			.then((r) => r.data as ArrayBuffer),
 	onThisDayPhotos: () => unwrap<Photo[]>(axios.get(generateOcsUrl('/apps/tagebuch/api/on-this-day/photos'))),
+	photoLocation: (path: string) => unwrap<{ location: { lat: number, lon: number } | null }>(
+		axios.get(generateOcsUrl('/apps/tagebuch/api/photo-location'), { params: { path } })),
 	photoData: (path: string, signal?: AbortSignal, version?: string) =>
 		axios.get(generateOcsUrl('/apps/tagebuch/api/photo'), { params: { path, version }, signal, responseType: 'arraybuffer' })
 			.then((r) => r.data as ArrayBuffer),

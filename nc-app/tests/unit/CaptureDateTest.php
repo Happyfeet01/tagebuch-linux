@@ -11,6 +11,21 @@ use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
 
 class CaptureDateTest extends TestCase {
+	public function testReadsSignedGpsAndRejectsAnIncompletePair(): void {
+		if (!is_executable('/usr/bin/exiftool')) self::markTestSkipped('ExifTool fehlt.');
+		$file = $this->createMock(File::class);
+		$cache = $this->createMock(ICache::class);
+		$cache->method('get')->willReturnOnConsecutiveCalls(
+			['GPSLatitude' => 12, 'GPSLatitudeRef' => 'S', 'GPSLongitude' => 34, 'GPSLongitudeRef' => 'W'],
+			['GPSLongitude' => 34]
+		);
+		$factory = $this->createMock(ICacheFactory::class);
+		$factory->method('createDistributed')->willReturn($cache);
+		$reader = new CaptureDate($factory);
+		self::assertSame(['lat' => -12.0, 'lon' => -34.0], $reader->coordinates($file));
+		self::assertNull($reader->coordinates($file));
+	}
+
 	public function testReadsOriginalDateFromUndatedImage(): void {
 		if (!is_executable('/usr/bin/exiftool')) {
 			self::markTestSkipped('ExifTool fehlt.');
@@ -25,7 +40,7 @@ class CaptureDateTest extends TestCase {
 		$file->method('fopen')->willReturn($stream);
 		$cache = $this->createMock(ICache::class);
 		$cache->method('get')->willReturn(null);
-		$cache->expects(self::once())->method('set')->with(self::anything(), '2023-11-18', 604800);
+		$cache->expects(self::once())->method('set')->with(self::anything(), ['DateTimeOriginal' => '2023:11:18 17:45:00'], 604800);
 		$factory = $this->createMock(ICacheFactory::class);
 		$factory->method('createDistributed')->willReturn($cache);
 		self::assertSame('2023-11-18', (new CaptureDate($factory))->fromFile($file));

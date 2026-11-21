@@ -144,6 +144,15 @@ class PhotoService {
 	 * @return array{content: string, mime: string, etag: string}
 	 */
 	public function getPhoto(string $path): array {
+		$node = $this->photoFile($path);
+		return ['content' => (string) $node->getContent(), 'mime' => self::mimeFor($node->getName()), 'etag' => $node->getEtag()];
+	}
+
+	public function coordinates(string $path): ?array {
+		return $this->captureDate->coordinates($this->photoFile($path));
+	}
+
+	private function photoFile(string $path): File {
 		$folder = $this->photoFolder();
 		$path = trim($path, '/');
 		$prefix = $folder . '/';
@@ -159,6 +168,6 @@ class PhotoService {
 		if (!$node instanceof File) {
 			throw new \InvalidArgumentException('Keine Datei');
 		}
-		return ['content' => (string) $node->getContent(), 'mime' => self::mimeFor($node->getName()), 'etag' => $node->getEtag()];
+		return $node;
 	}
 }
