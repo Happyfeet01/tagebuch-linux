@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+
+- Lange Ansichten wie die Einstellungen lassen sich innerhalb der Nextcloud-Oberfläche vertikal scrollen.
+
 ## 0.3.2
 
 - Das Template lädt die gebauten JavaScript- und CSS-Dateien direkt. Der Produktionsbuild prüft, dass der Eintrag im Template zur App-Version passt.
