@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use OCP\Util;
 
-$entry = 'tagebuch-main-0-3-11';
+$entry = 'tagebuch-main-0-3-12';
 
 Util::addScript(\OCA\Tagebuch\AppInfo\Application::APP_ID, $entry);
 Util::addStyle(\OCA\Tagebuch\AppInfo\Application::APP_ID, $entry);
