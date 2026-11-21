@@ -123,11 +123,19 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+:global(#tagebuch) {
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	min-width: 0;
+	overflow-y: auto;
+}
+
 .tagebuch-app {
 	padding: 16px;
 	max-width: 900px;
 	margin: 0 auto;
-	min-height: calc(100vh - var(--header-height, 50px));
+	min-height: 100%;
 	box-sizing: border-box;
 	background-color: var(--color-main-background);
 	background: color-mix(in srgb, var(--color-main-background) 78%, transparent);
