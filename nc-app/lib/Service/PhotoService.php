@@ -75,7 +75,7 @@ class PhotoService {
 	 *
 	 * @return array<int, array{path: string, name: string, year: string}>
 	 */
-	public function photosForDay(string $date): array {
+	public function photosForDay(string $date, bool $sameDay = false): array {
 		$folder = $this->photoFolder();
 		if ($folder === '') {
 			return [];
@@ -97,7 +97,7 @@ class PhotoService {
 				continue;
 			}
 			$yearDir = $node->getName();
-			if (!ctype_digit($yearDir) || $yearDir >= $year) {
+			if (!ctype_digit($yearDir) || ($sameDay ? $yearDir !== $year : $yearDir >= $year)) {
 				continue;
 			}
 			if (!$root->nodeExists($yearDir . '/' . $month)) {
@@ -114,6 +114,10 @@ class PhotoService {
 				$sourcePath .= '/' . $day;
 			}
 			foreach ($source->getDirectoryListing() as $file) {
+				if ($sameDay && $file instanceof File && $source === $monthFolder
+					&& !preg_match('/(?<![0-9])' . $year . '[-_]?' . $month . '[-_]?' . $day . '(?![0-9])/', $file->getName())) {
+					continue;
+				}
 				if ($file instanceof File && self::isMedia($file->getName())) {
 					$photos[] = ['path' => $sourcePath . '/' . $file->getName(), 'name' => $file->getName(), 'year' => $yearDir];
 					if (count($photos) >= self::MAX_PHOTOS) {

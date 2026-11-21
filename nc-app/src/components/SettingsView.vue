@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { api, type Settings } from '../api'
 import { hasEncryptionSetup, isEncryptionEnabled, isUnlocked, lockEncryption, setupEncryption, unlockEncryption } from '../crypto'
+import Templates from './Templates.vue'
+import Archive from './Archive.vue'
 import DiariumImport from './DiariumImport.vue'
 
 const emit = defineEmits<{ imported: [] }>()
@@ -102,6 +104,8 @@ const save = async () => {
 		<button type="button" @click="save">Speichern</button>
 		<p v-if="message" class="message">{{ message }}</p>
 
+		<Templates />
+		<Archive />
 		<DiariumImport @imported="emit('imported')" />
 
 		<h3>Verschlüsselung (clientseitig, AES-GCM)</h3>

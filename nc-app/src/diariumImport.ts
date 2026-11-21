@@ -34,7 +34,7 @@ function parseRow(value: unknown): Entry {
 			location = { lat, lon }
 		}
 	}
-	return { date: match[1], time: match[2] ? match[2] + ':' + match[3] : '00:00',
+	return { date: match[1], time: match[2] ? row.date.slice(11).replace(/(?:Z|[+-]\d\d:\d\d)$/, '').replace(/(\.\d{7})\d+$/, '$1') : '00:00',
 		heading, body: html ? plainText(html) : text, tags, rating: rating || null, location,
 		trackers: {}, attachments: [] }
 }
@@ -51,3 +51,26 @@ export function parseDiarium(json: string): Entry[] {
 }
 
 export const importKey = (entry: Entry): string => entry.date + 'T' + (entry.time || '00:00')
+
+export function availableImportTime(row: Entry, occupied: Map<string, Entry>): string | null {
+	const original = importKey(row)
+	const minute = original.slice(0, 16)
+	const equalContent = (entry?: Entry) => entry && entry.body === row.body && entry.heading === row.heading
+		&& entry.rating === row.rating && JSON.stringify(entry.tags) === JSON.stringify(row.tags)
+		&& entry.location?.lat === row.location?.lat && entry.location?.lon === row.location?.lon
+	// Recognize entries previously imported by the minute-only importer.
+	if (original !== minute && equalContent(occupied.get(minute))) return null
+	let key = original
+	let slot = row.time!
+	let offset = 0
+	const [hms, fraction = ''] = slot.split('.')
+	while (occupied.has(key) && !equalContent(occupied.get(key))) {
+		offset++
+		if (offset >= 10000000) throw new Error('Kein freier Zeitstempel in dieser Sekunde.')
+		const part = (Number(fraction.padEnd(7, '0')) + offset) % 10000000
+		slot = (hms.length === 5 ? hms + ':00' : hms) + '.' + String(part).padStart(7, '0')
+		key = row.date + 'T' + slot
+	}
+	if (occupied.has(key)) return null
+	return slot
+}

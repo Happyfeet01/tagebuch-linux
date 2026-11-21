@@ -84,6 +84,15 @@ class PhotoServiceTest extends TestCase {
 		$this->assertSame('Fotos/2023/11/m.jpg', $photos[0]['path']);
 	}
 
+	public function testSelectedDayFiltersDatesInMonthFolder(): void {
+		$svc = $this->service();
+		$month = $this->folder('11', [$this->file('IMG_20261121_0700.jpg'), $this->file('2026-11-20.jpg')]);
+		$root = $this->folder('Fotos', [$this->folder('2026')], ['2026/11'], ['2026/11' => $month]);
+		$this->userFolder->method('nodeExists')->willReturn(true);
+		$this->userFolder->method('get')->willReturn($root);
+		self::assertSame(['IMG_20261121_0700.jpg'], array_column($svc->photosForDay('2026-11-21', true), 'name'));
+	}
+
 	public function testPhotosForDayEmptyWithoutFolderSetting(): void {
 		$svc = $this->service('');
 		$this->assertSame([], $svc->photosForDay('2025-11-18'));
