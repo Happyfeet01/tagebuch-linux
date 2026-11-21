@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+
+- Diarium-Sicherungen (.diary) lassen sich direkt im Browser einlesen und über die vorhandene Importvorschau übernehmen.
+
 ## 0.3.3
 
 - Lange Ansichten wie die Einstellungen lassen sich innerhalb der Nextcloud-Oberfläche vertikal scrollen.

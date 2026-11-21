@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { readDiaryBackup } from '../diaryBackup'
 import { api, type Entry } from '../api'
 import { decryptPayload, encryptPayload, isEncryptionEnabled, isUnlocked } from '../crypto'
 import { availableImportTime, importKey, parseDiarium } from '../diariumImport'
@@ -16,7 +17,7 @@ async function choose(event: Event) {
 	if (!file) return
 	busy.value = true
 	try {
-		rows.value = parseDiarium(await file.text())
+		rows.value = file.name.toLowerCase().endsWith('.diary') ? await readDiaryBackup(file) : parseDiarium(await file.text())
 		message.value = rows.value.length + ' Einträge in der Datei gefunden.'
 	} catch (error) {
 		message.value = error instanceof SyntaxError ? 'Bitte wähle eine Diarium-JSON-Datei.' : String(error)
@@ -67,9 +68,9 @@ async function importEntries() {
 <template>
 	<section>
 		<h3>Aus Diarium importieren</h3>
-		<p>Wähle den JSON-Export aus Diarium. Übernommen werden Datum, Uhrzeit, Titel, Text, Tags, Sterne und Koordinaten. Anhänge, Personen, Tracker und Wetter bleiben in der Exportquelle.</p>
+		<p>Wähle eine Diarium-Sicherung (.diary) oder einen JSON-Export. Die Datei wird im Browser gelesen. Übernommen werden Datum, Uhrzeit, Titel, Text, Tags, Sterne und Koordinaten. Anhänge, Vorlagen, Personen, Tracker und Ereignisse bleiben in der Exportquelle.</p>
 		<p>Verschiedene Zeitstempel innerhalb einer Minute bleiben erhalten. Bei identischer Zeit bleiben unterschiedliche Inhalte durch Sekundenbruchteile unterscheidbar.</p>
-		<input type="file" aria-label="Diarium-JSON auswählen" accept=".json,application/json" :disabled="busy" @change="choose">
+		<input type="file" aria-label="Diarium-Datei auswählen" accept=".diary,.json,application/json" :disabled="busy" @change="choose">
 		<button type="button" :disabled="busy || !rows.length" @click="importEntries">Einträge importieren</button>
 		<p role="status">{{ message }}</p>
 	</section>
