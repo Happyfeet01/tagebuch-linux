@@ -18,6 +18,7 @@ export default createAppConfig(
 		[entry]: resolve(join('src', 'main.ts')),
 	},
 	{
+		assetFileNames: asset => asset.names.includes('worker.sql-asm.js') ? 'js/diarium-sql-[hash].js' : undefined,
 		createEmptyCSSEntryPoints: true,
 		extractLicenseInformation: true,
 		thirdPartyLicense: false,

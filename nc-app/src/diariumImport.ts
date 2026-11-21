@@ -41,7 +41,11 @@ function parseRow(value: unknown): Entry {
 
 export function parseDiarium(json: string): Entry[] {
 	const data: unknown = JSON.parse(json.replace(/^\uFEFF/, ''))
-	return (Array.isArray(data) ? data : [data]).map((row, index) => {
+	return parseDiariumRows(Array.isArray(data) ? data : [data])
+}
+
+export function parseDiariumRows(rows: unknown[]): Entry[] {
+	return rows.map((row, index) => {
 		try {
 			return parseRow(row)
 		} catch {
