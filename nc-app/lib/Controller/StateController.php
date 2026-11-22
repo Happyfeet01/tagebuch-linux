@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace OCA\Tagebuch\Controller;
 
 use OCP\AppFramework\Http\Attribute\ApiRoute;
+use OCP\AppFramework\Http\Attribute\CORS;
+use OCA\Tagebuch\Service\CorsOriginPolicy;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
@@ -13,7 +15,7 @@ use OCP\IDBConnection;
 use OCP\IRequest;
 
 class StateController extends OCSController {
-	public function __construct(string $appName, IRequest $request, private IDBConnection $db, private string $userId) {
+	public function __construct(string $appName, IRequest $request, private IDBConnection $db, private string $userId, private CorsOriginPolicy $corsOrigins) {
 		parent::__construct($appName, $request);
 	}
 
@@ -23,8 +25,10 @@ class StateController extends OCSController {
 	}
 
 	#[NoAdminRequired]
+	#[CORS]
 	#[ApiRoute(verb: 'GET', url: '/api/state/{key}')]
 	public function get(string $key): DataResponse {
+		if (!$this->corsOrigins->allows($this->request->getHeader('Origin'))) return new DataResponse(['error' => 'Origin not allowed'], 403);
 		$q = $this->db->getQueryBuilder();
 		$q->select('revision', 'payload')->from('tagebuch_state');
 		$result = $this->matches($q, $key)->executeQuery();
