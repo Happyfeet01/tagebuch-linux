@@ -16,7 +16,7 @@ use OCP\IRequest;
  * with OPTIONS, so user-id-dependent diary controllers cannot handle it.
  */
 class CorsController extends OCSController {
-	public function __construct(string $appName, private IRequest $request, private CorsOriginPolicy $origins) {
+	public function __construct(string $appName, IRequest $request, private CorsOriginPolicy $origins) {
 		parent::__construct($appName, $request);
 	}
 
