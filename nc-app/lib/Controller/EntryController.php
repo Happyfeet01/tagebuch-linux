@@ -6,9 +6,11 @@ namespace OCA\Tagebuch\Controller;
 
 use OCA\Tagebuch\Http\ContentResponse;
 use OCA\Tagebuch\Service\EntryService;
+use OCA\Tagebuch\Service\CorsOriginPolicy;
 use OCA\Tagebuch\Service\TokenService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
+use OCP\AppFramework\Http\Attribute\CORS;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\Response;
@@ -23,6 +25,7 @@ class EntryController extends OCSController {
 		string $appName,
 		IRequest $request,
 		private EntryService $entryService,
+		private CorsOriginPolicy $corsOrigins,
 		private TokenService $tokens,
 		private \OCP\IDBConnection $db,
 		private string $userId,
@@ -41,8 +44,10 @@ class EntryController extends OCSController {
 	}
 
 	#[NoAdminRequired]
+	#[CORS]
 	#[ApiRoute(verb: 'GET', url: '/api/entries')]
 	public function list(string $from = '', string $to = ''): DataResponse {
+		if (!$this->corsOrigins->allows($this->request->getHeader('Origin'))) return new DataResponse(['error' => 'Origin not allowed'], 403);
 		return new DataResponse($this->entryService->listEntries($from !== '' ? $from : null, $to !== '' ? $to : null));
 	}
 
@@ -63,6 +68,7 @@ class EntryController extends OCSController {
 	}
 
 	#[NoAdminRequired]
+	#[CORS]
 	#[ApiRoute(verb: 'POST', url: '/api/entry')]
 	public function save(
 		?int $id = null,
@@ -78,6 +84,7 @@ class EntryController extends OCSController {
 		?int $encrypted = null,
 		?string $expectedModified = null,
 	): DataResponse {
+		if (!$this->corsOrigins->allows($this->request->getHeader('Origin'))) return new DataResponse(['error' => 'Origin not allowed'], 403);
 		$this->db->beginTransaction();
 		try {
 			if (!$encrypted) {
