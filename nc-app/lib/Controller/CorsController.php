@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\Tagebuch\Controller;
 
 use OCA\Tagebuch\Service\CorsOriginPolicy;
+use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -23,7 +24,28 @@ class CorsController extends OCSController {
 	#[PublicPage]
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
-	public function preflight(string $path): Response {
+	#[ApiRoute(verb: 'OPTIONS', url: '/api/entries')]
+	public function preflightEntries(): Response {
+		return $this->preflight('entries');
+	}
+
+	#[PublicPage]
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[ApiRoute(verb: 'OPTIONS', url: '/api/entry')]
+	public function preflightEntry(): Response {
+		return $this->preflight('entry');
+	}
+
+	#[PublicPage]
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	#[ApiRoute(verb: 'OPTIONS', url: '/api/state/vault')]
+	public function preflightVault(): Response {
+		return $this->preflight('state/vault');
+	}
+
+	private function preflight(string $path): Response {
 		$response = new Response();
 		$response->addHeader('Vary', 'Origin');
 		$methods = match ($path) {
