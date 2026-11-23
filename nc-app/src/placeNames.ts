@@ -27,3 +27,11 @@ export function displayPlace(location: EntryLocation | null) {
 	const name = approximatePlace(location)
 	return name ? 'Nähe ' + name : locationLabel(location)
 }
+
+/** Resolve a nearby city using the locally bundled place index; no coordinates leave the browser. */
+export async function resolveApproximatePlace(location?: EntryLocation | null): Promise<string> {
+	const initial = approximatePlace(location)
+	if (initial) return initial
+	if (loading) await loading
+	return approximatePlace(location)
+}
