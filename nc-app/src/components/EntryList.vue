@@ -55,7 +55,7 @@ export default {
 .entry-list {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 10px;
 }
 .empty {
 	color: var(--color-text-maxcontrast);
@@ -68,32 +68,30 @@ export default {
 	height: auto;
 	white-space: normal;
 	gap: 8px;
-	align-items: baseline;
+	align-items: center;
 	text-align: left;
-	padding: 8px 12px;
+	padding: 14px 16px;
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
 	background: var(--color-main-background);
+	box-shadow: 0 2px 10px rgba(0, 77, 130, .05);
 	cursor: pointer;
+	transition: border-color .15s, box-shadow .15s;
 }
-.entry-row:hover {
-	background: var(--color-background-hover);
-}
-.entry-date {
-	font-weight: bold;
-}
+.entry-row:hover { background: var(--color-background-hover); border-color: var(--color-primary-element); }
+.entry-row:focus-visible { outline: 2px solid var(--color-primary-element); outline-offset: 2px; }
+.entry-date { font-weight: 700; color: var(--color-primary-element); font-size: .9em; }
 .entry-stars {
 	color: #e6a700;
 }
 .entry-title {
 	flex: 1 1 100%;
-	font-weight: 600;
+	font-weight: 650;
+	font-size: 1.06em;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.entry-tags {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.85em;
-}
+.entry-tags { color: var(--color-text-maxcontrast); font-size: .85em; overflow-wrap: anywhere; }
+@media(max-width: 420px) { .entry-row { padding: 12px; } .entry-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; } }
 </style>
