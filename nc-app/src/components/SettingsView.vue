@@ -111,6 +111,7 @@ const save = async () => {
 		<button type="button" @click="save">Speichern</button>
 		<p v-if="message" class="message">{{ message }}</p>
 
+		<h3>Schreiben und Daten</h3>
 		<Templates />
 		<Archive />
 		<details><summary>Import und Export</summary>
@@ -141,7 +142,8 @@ const save = async () => {
 
 <style scoped>
 .settings {
-	max-width: 560px;
+	max-width: min(100%, 720px);
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -162,7 +164,10 @@ const save = async () => {
 .photo-folder {
 	flex: 1;
 }
-.message {
-	color: var(--color-success);
-}
+.message { color: var(--color-success); }
+.settings details { border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; background: var(--color-main-background); min-width: 0; }
+.settings summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.settings h3 { margin: 18px 0 2px; }
+.settings input:not([type=checkbox]), .settings select { box-sizing: border-box; max-width: 100%; min-width: 0; }
+@media(max-width: 540px){.row{flex-wrap:wrap}.settings{width:100%}}
 </style>
