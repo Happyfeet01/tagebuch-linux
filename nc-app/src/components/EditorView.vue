@@ -2,7 +2,7 @@
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { OnlineDraft } from '../drafts'
 import TrackerFields from './TrackerFields.vue'
-import { approximatePlace } from '../placeNames'
+import { approximatePlace, resolveApproximatePlace } from '../placeNames'
 import { point } from '../places'
 import DayContext from './DayContext.vue'
 import { api, type Entry, type EntryLocation } from '../api'
@@ -25,6 +25,26 @@ const loading = ref(true)
 const unreadable = ref(false)
 let selectionVersion = 0
 
+async function suggestPlace() {
+	if (!point(location.value)) {
+		message.value = 'Bitte zuerst eine GPS-Position ermitteln.'
+		return
+	}
+	const version = selectionVersion
+	const coords = { ...location.value }
+	try {
+		const name = await resolveApproximatePlace(coords)
+		if (version !== selectionVersion || location.value.lat !== coords.lat || location.value.lon !== coords.lon) return
+		if (!name) {
+			message.value = 'Für diese Koordinaten ist kein Ort innerhalb von 15 km in der lokalen Ortsdatenbank vorhanden.'
+			return
+		}
+		// Never silently replace a user-entered place name.
+		if (!location.value.name?.trim()) location.value = { ...location.value, name }
+	} catch {
+		message.value = 'Die lokale Ortsdatenbank konnte nicht geladen werden.'
+	}
+}
 function locate() {
 	if (!navigator.geolocation) {
 		message.value = 'Standortabfrage ist in diesem Browser nicht verfügbar. Du kannst einen Ortsnamen eintragen.'
@@ -37,6 +57,7 @@ function locate() {
 		if (version !== selectionVersion) return
 		location.value = { ...location.value, lat: coords.latitude, lon: coords.longitude }
 		locating.value = false
+		void suggestPlace()
 	}, () => {
 		if (version !== selectionVersion) return
 		locating.value = false
@@ -330,6 +351,7 @@ onMounted(async () => {
 						@input="location = { ...location, name: ($event.target as HTMLInputElement).value }">
 				</label>
 				<button type="button" :disabled="locating" @click="locate">{{ locating ? 'Standort wird ermittelt …' : 'Aktuellen Standort übernehmen' }}</button>
+				<button v-if="point(location)" type="button" :disabled="locating" @click="suggestPlace">Ortsnamen vorschlagen</button>
 				<span v-if="location.lat != null && location.lon != null">{{ approximatePlace(location) ? 'Nähe ' + approximatePlace(location) + ' · ' : '' }}{{ location.lat.toFixed(5) }}, {{ location.lon.toFixed(5) }}</span>
 				<button v-if="location.name || location.lat != null" type="button" :disabled="locating" @click="location = {}">Ort entfernen</button>
 			</div>
@@ -362,12 +384,36 @@ onMounted(async () => {
 
 <style scoped>
 .editor {
+	--journal-primary: var(--color-primary-element, #0082c9);
+	font-family: var(--font-face, system-ui, sans-serif);
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 	max-width: 760px;
 }
-fieldset { display: flex; flex-direction: column; gap: 10px; border: 0; padding: 0; min-width: 0; }
+fieldset { display: flex; flex-direction: column; gap: 14px; border: 0; padding: 0; min-width: 0; }
+fieldset > input, fieldset > textarea, fieldset > label > input, fieldset select, .memory-place input {
+	box-sizing: border-box;
+	border: 1px solid var(--color-border, #d5e4ef);
+	background: var(--color-main-background, #fff);
+	color: var(--color-main-text, #172b43);
+	border-radius: 12px;
+	padding: 12px 14px;
+	min-height: 44px;
+	max-width: 100%;
+	font: inherit;
+}
+fieldset > input:focus-visible, fieldset > textarea:focus-visible, fieldset input:focus-visible, fieldset select:focus-visible {
+	outline: 2px solid var(--journal-primary);
+	outline-offset: 2px;
+}
+fieldset > textarea { min-height: 240px; line-height: 1.7; resize: vertical; }
+@media (max-width: 600px) {
+	.editor-head { flex-wrap: wrap; gap: 12px; }
+	.editor-head div { flex-wrap: wrap; }
+	.meta-row { align-items: stretch; }
+	.memory-place { flex-basis: 100%; }
+}
 .editor-head {
 	display: flex;
 	justify-content: space-between;
@@ -384,8 +430,8 @@ fieldset { display: flex; flex-direction: column; gap: 10px; border: 0; padding:
 	font-size: 1.1em;
 	font-weight: bold;
 }
-.body {
-	font-family: monospace;
+	.body {
+	font-family: inherit;
 	width: 100%;
 }
 .meta-row {
@@ -404,7 +450,7 @@ fieldset { display: flex; flex-direction: column; gap: 10px; border: 0; padding:
 .star.active {
 	color: #e6a700;
 }
-.memory-place { flex: 0 0 50%; min-width: min(100%, 12rem); }
+.memory-place { flex: 0 0 50%; min-width: min(100%, 12rem); font-weight: 600; }
 .memory-place input { display: block; width: 100%; box-sizing: border-box; }
 .tags {
 	flex: 1;
