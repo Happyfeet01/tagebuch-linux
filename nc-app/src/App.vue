@@ -145,6 +145,7 @@ onMounted(async () => {
 .tagebuch-app {
 	padding: 16px;
 	max-width: 900px;
+	width: 100%;
 	margin: 0 auto;
 	min-height: 100%;
 	box-sizing: border-box;
@@ -177,5 +178,15 @@ onMounted(async () => {
 .tabs .new {
 	margin-left: auto;
 	font-weight: bold;
+}
+.tagebuch-app main { min-width: 0; max-width: 100%; }
+@media (max-width: 540px) {
+	.tagebuch-app { padding: 10px; border-radius: 12px; }
+	.tabs { gap: 5px; }
+	.tabs button { padding: 8px 10px; font-size: .84em; min-height: 38px; }
+	.tabs .new { margin-left: 0; }
+	.new-entry { align-items: stretch; }
+	.new-entry label { min-width: 0; flex: 1 1 100%; }
+	.new-entry input { max-width: 100%; box-sizing: border-box; }
 }
 </style>

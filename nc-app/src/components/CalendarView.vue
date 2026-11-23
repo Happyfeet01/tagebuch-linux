@@ -74,7 +74,7 @@ const isToday = (day: number): boolean => {
 </template>
 
 <style scoped>
-.calendar { width: 100%; min-width: 0; color-scheme: light dark; }
+.calendar { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; }
 .calendar-header {
 	display: flex;
 	justify-content: space-between;
@@ -84,7 +84,10 @@ const isToday = (day: number): boolean => {
 .calendar-grid {
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
-	gap: 2px;
+	gap: clamp(1px, 0.7vw, 4px);
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
 }
 .weekday {
 	text-align: center;
@@ -94,12 +97,15 @@ const isToday = (day: number): boolean => {
 .cell {
 	width: 100%;
 	min-width: 0;
-	min-height: 36px;
+	min-height: 0;
+	aspect-ratio: 1;
+	font-size: clamp(0.75rem, 3.5vw, 1rem);
+	line-height: 1;
 	padding: 0;
 	box-sizing: border-box;
 	border: none;
 	background: none;
-	border-radius: 6px;
+	border-radius: 10px;
 }
 .day {
 	cursor: pointer;
@@ -112,8 +118,14 @@ const isToday = (day: number): boolean => {
 	font-weight: bold;
 }
 .day.has-entry {
-	color: light-dark(#155bb3, #87baff);
-	text-decoration: underline;
-	font-weight: bold;
+	background: var(--color-primary-element, #0082c9);
+	color: var(--color-primary-element-text, #fff);
+	font-weight: 700;
+	text-decoration: none;
 }
+.day.has-entry:hover { filter: brightness(.91); }
+.day.today.has-entry { outline: 2px solid var(--color-main-text, #172b43); outline-offset: -4px; }
+.calendar-header button { min-width: 36px; min-height: 36px; }
+.calendar-header strong { text-align: center; min-width: 0; }
+@media (max-width: 420px) { .calendar-grid { gap: 1px; } .calendar-header { gap: 8px; } }
 </style>

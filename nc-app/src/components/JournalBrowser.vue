@@ -12,6 +12,7 @@ const emit = defineEmits<{ open: [Entry] }>()
 const rows = ref<Entry[]>([])
 const from = ref(''), to = ref(''), place = ref('')
 const mapElement = ref<HTMLElement>()
+const mapVisible = ref(false)
 let map: L.Map | undefined
 let markers: L.LayerGroup | undefined
 interface City { id: number, name: string, country?: string, admin1?: string, latitude: number, longitude: number }
@@ -73,12 +74,27 @@ function refreshMap() {
 	if (bounds.isValid()) map.fitBounds(bounds.pad(0.1), { maxZoom: 13 })
 }
 async function showMap() {
-	if (map) return
+	if (map || !mapVisible.value) return
 	await nextTick()
 	map = L.map(mapElement.value!).setView([50, 10], 5)
 	L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map)
 	markers = L.layerGroup().addTo(map)
 	refreshMap()
+}
+function toggleMap(event: Event) {
+	const opened = (event.target as HTMLDetailsElement).open
+	mapVisible.value = opened
+	if (opened) {
+		void nextTick(async () => {
+			if (!mapVisible.value) return
+			await showMap()
+			map?.invalidateSize()
+		})
+	} else {
+		map?.remove()
+		map = undefined
+		markers = undefined
+	}
 }
 watch(() => props.entries, async (entries, _, cleanup) => {
 	let active = true
@@ -102,11 +118,11 @@ onBeforeUnmount(() => { request?.abort(); map?.remove() })
 		</select>
 	</label></div>
 	<p v-if="status" role="status">{{ status }}</p>
-	<details @toggle="event => { if ((event.target as HTMLDetailsElement).open) { showMap(); nextTick(() => map?.invalidateSize()) } }">
-		<summary>Karte mit OpenStreetMap laden ({{ mapped.length }} Einträge mit Koordinaten)</summary><div ref="mapElement" class="map"></div>
+	<details @toggle="toggleMap">
+		<summary>Karte mit OpenStreetMap laden ({{ mapped.length }} Einträge mit Koordinaten)</summary><div v-if="mapVisible" ref="mapElement" class="map"></div>
 	<small>Ungefähre Ortsnamen aus <a href="https://www.geonames.org/">GeoNames</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</small></details>
-	<EntryList :entries="visible" :resolved="true" details empty-text="Keine passenden Einträge." @open="emit('open', $event)" />
-	<nav v-if="dates.length > 4" aria-label="Tage durchblättern">
+	<div class="results"><h3>Einträge · {{ dates.length }} Tage</h3><p class="hint">Vier Tage pro Seite · {{ filtered.length }} passende Einträge</p><EntryList :entries="visible" :resolved="true" details empty-text="Keine passenden Einträge." @open="emit('open', $event)" /></div>
+	<nav v-if="dates.length > 4" class="paging" aria-label="Tage durchblättern">
 		<button type="button" :disabled="page === 0" @click="page--">Neuere Tage</button>
 		<span>{{ page + 1 }} / {{ Math.ceil(dates.length / 4) }}</span>
 		<button type="button" :disabled="(page + 1) * 4 >= dates.length" @click="page++">Ältere Tage</button>
@@ -116,5 +132,13 @@ onBeforeUnmount(() => { request?.abort(); map?.remove() })
 section { display: grid; gap: 12px; min-width: 0; }
 .map { height: 300px; }
 .filters, nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.filters label { display: grid; min-width: 0; }
+.filters label { display: grid; min-width: 0; flex: 1 1 170px; font-weight: 600; gap: 5px; }
+.filters input,.filters select { box-sizing: border-box; min-width: 0; max-width: 100%; width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-main-background); color: var(--color-main-text); }
+.results { padding: 14px; background: var(--color-main-background); border: 1px solid var(--color-border); border-radius: var(--border-radius-large); min-width: 0; }
+.results h3 { margin: 0 0 6px; }
+.hint { font-size: .9em; color: var(--color-text-maxcontrast); margin: 0 0 12px; }
+.paging { justify-content: center; }
+.paging button { min-height: 40px; }
+.map { min-width: 0; width: 100%; max-width: 100%; overflow: hidden; border-radius: var(--border-radius-large); }
+@media(max-width: 500px) { .filters { display: grid; grid-template-columns: minmax(0,1fr); } .results { padding: 10px; } }
 </style>
