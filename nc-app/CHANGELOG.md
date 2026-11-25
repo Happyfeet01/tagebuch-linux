@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.16
+
+- Freiwilliger Unterstützungshinweis in der App und Spendenlinks im App Store.
+
 ## 0.3.15
 
 - Das Installationspaket enthält den von Nextcloud angeforderten JavaScript-Einstieg als klassisches Skript.
