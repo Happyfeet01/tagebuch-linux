@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.17
+
+- Der Unterstützungshinweis lässt sich auf schmalen Bildschirmen schließen und beansprucht keine eigene Spalte.
+
 ## 0.3.16
 
 - Freiwilliger Unterstützungshinweis in der App und Spendenlinks im App Store.
