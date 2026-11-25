@@ -12,6 +12,10 @@
 	<category>office</category>
 	<bugs>https://github.com/Happyfeet01/tagebuch-nc/issues</bugs>
 	<repository type="git">https://github.com/Happyfeet01/tagebuch-nc.git</repository>
+	<screenshot>https://raw.githubusercontent.com/Happyfeet01/tagebuch-linux/da60936d7b5c617a9539ed034bba67c5fd2c55c5/nc-app/docs/screenshots/timeline.png</screenshot>
+	<donation type="other" title="Buy Me a Coffee">https://buymeacoffee.com/sly5ir9ov</donation>
+	<donation type="other" title="Unterstützung des Entwicklers über Ko-fi">https://ko-fi.com/dermueller</donation>
+	<donation type="paypal" title="Unterstützung des Entwicklers über PayPal">https://paypal.me/LarsM1980</donation>
 	<dependencies>
 		<lib>zip</lib>
 		<nextcloud min-version="31" max-version="35"/>

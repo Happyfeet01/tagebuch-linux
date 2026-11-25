@@ -172,3 +172,9 @@ MIT – siehe [LICENSE](LICENSE).
 Unter [nc-app/](nc-app/README.md) liegt die Nextcloud-App „Tagebuch“ (PHP + Vue, PR #2):
 Einträge in der NC-Datenbank (optional clientseitig AES-GCM-verschlüsselt), Anhänge als Dateien,
 Erinnerungs-Mail täglich 20:00 Uhr + Mail-in (IMAP), PWA fürs iPhone.
+
+## Unterstützung des Entwicklers
+
+Du nutzt das Projekt und möchtest mir einen Kaffee ausgeben? Ich freue mich über deine Unterstützung. ☕
+
+[Buy Me a Coffee](https://buymeacoffee.com/sly5ir9ov) · [Ko-fi](https://ko-fi.com/dermueller) · [PayPal](https://paypal.me/LarsM1980)
