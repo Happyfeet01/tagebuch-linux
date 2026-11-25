@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.18
+
+- GitHub Actions baut das Nextcloud-Paket und kann es mit dem App-Zertifikat signiert veröffentlichen.
+
 ## 0.3.17
 
 - Der Unterstützungshinweis lässt sich auf schmalen Bildschirmen schließen und beansprucht keine eigene Spalte.
