@@ -35,6 +35,8 @@ class PageController extends Controller {
 	}
 
 	private function journalPage(string $app, string $template, array $params): TemplateResponse {
+		\OCP\Util::addScript('tagebuch', 'support-notice');
+		\OCP\Util::addStyle('tagebuch', 'support-notice');
 		$response = new TemplateResponse($app, $template, $params);
 		$policy = new \OCP\AppFramework\Http\ContentSecurityPolicy();
 		$policy->addAllowedImageDomain('https://tile.openstreetmap.org');
