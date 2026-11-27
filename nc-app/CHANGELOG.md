@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.16
+
+- Antworten auf Erinnerungsmails werden wieder als Tagebucheinträge gespeichert. Schlägt das Speichern fehl, bleibt die Nachricht für einen erneuten Import ungelesen.
+
 ## 0.3.15
 
 - Das Installationspaket enthält den von Nextcloud angeforderten JavaScript-Einstieg als klassisches Skript.
