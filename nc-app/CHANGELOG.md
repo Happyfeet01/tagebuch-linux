@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.18
+
+- Antworten auf Erinnerungsmails werden wieder als Tagebucheinträge gespeichert. Bei einem Speicherfehler bleibt die Nachricht für einen erneuten Import ungelesen.
+
 ## 0.3.17
 
 - Der Unterstützungshinweis lässt sich auf schmalen Bildschirmen schließen und beansprucht keine eigene Spalte.
