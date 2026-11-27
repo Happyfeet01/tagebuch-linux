@@ -10,17 +10,14 @@ use OCA\Tagebuch\Service\MailInParser;
 use OCA\Tagebuch\Service\TokenService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
-use OCP\Files\IRootFolder;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
-use OCP\IUserSession;
 
 class MailInJob extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private IConfig $config,
-		private IRootFolder $rootFolder,
-		private IUserSession $userSession,
+		private EntryService $entryService,
 		private TokenService $tokens,
 		private LoggerInterface $logger,
 	) {
@@ -53,7 +50,7 @@ class MailInJob extends TimedJob {
 		if (is_array($ids)) {
 			foreach ($ids as $id) {
 				try {
-					$raw = imap_fetchheader($stream, $id) . "\r\n" . imap_body($stream, $id);
+					$raw = imap_fetchheader($stream, $id) . "\r\n" . imap_body($stream, $id, FT_PEEK);
 					$token = MailInParser::extractToken($raw);
 					$info = $token !== null ? $this->tokens->verify($token) : null;
 					if ($info === null) {
@@ -74,11 +71,12 @@ class MailInJob extends TimedJob {
 	}
 
 	private function storeMailEntry(string $userId, string $date, string $body): void {
-		$service = (new EntryService($this->rootFolder, $this->userSession))->forUser($userId);
+		$service = $this->entryService->forUser($userId);
 		$existing = $service->entriesForDay($date);
 		$time = count($existing) > 0 ? date('H:i') : null;
 		$entry = $service->getEntry($date, $time) ?? ['date' => $date, 'time' => $time];
-		$entry['body'] = trim((string) ($entry['body'] ?? '')) . ($entry['body'] !== '' ? "\n\n" : '') . $body;
+		$previousBody = trim((string) ($entry['body'] ?? ''));
+		$entry['body'] = $previousBody === '' ? $body : $previousBody . "\n\n" . $body;
 		if (trim((string) ($entry['heading'] ?? '')) === '') {
 			$entry['heading'] = 'Per E-Mail';
 		}
